@@ -24,6 +24,7 @@ doc_type_id = ""
 langchaindocs = []
 
 def classify_document(classifier_id, doc_path):
+    global doc_type_id
     
     # [START classify_document]
     from azure.core.credentials import AzureKeyCredential
@@ -61,7 +62,11 @@ def classify_document(classifier_id, doc_path):
                     f"Found document of type '{doc.doc_type or 'N/A'}' with a confidence of {doc.confidence} contained on "
                     f"the following pages: {[region.page_number for region in doc.bounding_regions]}"
                 )
-                return doc.doc_type
+                doc_info = {
+                    "classification": doc.doc_type,
+                    "confidence": doc.confidence
+                            }
+                return json.dumps(doc_info)
     # [END classify_document]
 
 if __name__ == "__main__":
@@ -76,7 +81,8 @@ if __name__ == "__main__":
             doc_path = sample_file
             print(f"Classifying document {document}...")
             request = classify_document(CLASSIFIER_ID, doc_path)
-            doc_type_id = classify_document(CLASSIFIER_ID, doc_path)
+            my_json = json.loads(request)
+            doc_type_id = my_json['classification']
         
     except HttpResponseError as error:
         # Examples of how to check an HttpResponseError
@@ -113,7 +119,6 @@ def _in_span(word, spans):
     return False
 
 def document_layout(doc_path):
-
     from azure.core.credentials import AzureKeyCredential
     from azure.ai.documentintelligence import DocumentIntelligenceClient
     from azure.ai.documentintelligence.models import AnalyzeResult
@@ -181,7 +186,6 @@ if __name__ == "__main__":
             doc_path = sample_file
             print(f"Analyzing layout for document {document}...")
             request = document_layout(doc_path)
-            doc_type_id = document_layout(doc_path)
         
     except HttpResponseError as error:
         # Examples of how to check an HttpResponseError
@@ -202,14 +206,15 @@ if __name__ == "__main__":
 #-------------------------LangChain--------------------------#
 
 def langchain():
+    global langchaindocs
     from langchain_community.document_loaders import AzureAIDocumentIntelligenceLoader
 
     loader = AzureAIDocumentIntelligenceLoader(
-        api_endpoint=endpoint, api_key=key, file_path=sample_file, api_model="prebuilt-layout"
+        api_endpoint=ENDPOINT, api_key=KEY, file_path=sample_file, api_model="prebuilt-layout"
     )
 
-    documents = loader.load()
-    langchaindocs = documents
+    langchaindocs = loader.load()
+    print(langchaindocs[0])
 
 if __name__ == "__main__":
     langchain()
@@ -223,6 +228,7 @@ def llm():
     cohere_key = os.environ["COHERE_API_KEY"]
 
     # User query we will use for the generation
+    print("doc_type_id: " + doc_type_id)
     boilerplate = "You are a helpful AI assistant. Please answer each question on a separate line. Just give the answer and don't include any additional words."
     if doc_type_id == "cash_flows":
         user_query = boilerplate + "What is the most recent date of this cash flow document?"
@@ -251,7 +257,7 @@ def llm():
     llm = ChatCohere(cohere_api_key=cohere_key)
     rag = CohereRagRetriever(llm=llm, connectors=[])
 
-    docs = rag.get_relevant_documents(
+    docs = rag.invoke(
         user_query,
         documents=[
         langchaindocs[0]

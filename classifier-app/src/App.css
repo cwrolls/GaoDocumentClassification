@@ -1,10 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 .App {
   text-align: center;
+}
+
+.p-fileupload-buttonbar {
+  justify-content: center;
+}
+
+.p-fileupload-content {
+  border: 2px solid rgb(94, 129, 172);
+  border-radius: 0px;
+  width: 50vw;
+  height: 20vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-family: "DM Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 200;
+  font-style: normal;
 }
 
 .dm-sans-title {
@@ -25,6 +45,17 @@
   font-family: "DM Sans", sans-serif;
   font-optical-sizing: auto;
   font-weight: 200;
+  font-style: normal;
+}
+
+.code { 
+  background-color: #E6E6E6;
+  padding: 3px 10px 3px 10px; 
+  width: auto;
+  border-radius: 8px;
+
+  font-family: "DM Mono", monospace;
+  font-weight: 500;
   font-style: normal;
 }
 
