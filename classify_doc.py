@@ -14,7 +14,7 @@ API_TYPE = "documentClassifiers"
 API_VERSION = "2024-02-29-preview"
 
 directory_path = os.path.dirname(__file__)
-sample_file = os.path.join(directory_path, 'BlobsRenamed/Emails/38a.pdf')
+sample_file = os.path.join(directory_path, 'BlobsRenamed/Emails/30.png')
 sample_file_array = [sample_file]
 
 #-------------------------Azure Custom Classification--------------------------#
@@ -277,4 +277,4 @@ def llm(langchain_doc, doc_type):
     return answer.page_content
 
 if __name__ == "__main__":
-    llm(langchaindocs[0])
+    llm(langchaindocs[0], doc_type_id)
