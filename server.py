@@ -15,10 +15,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 class_result = "Not classified yet"
 file_path = ""
 
+'''
 @app.route('/')
 @cross_origin(supports_credentials=True)
 def home():
     return "Hello, Flask!"
+'''
 
 @app.route('/api/upload', methods=['POST', 'GET'])
 @cross_origin(supports_credentials=True)

@@ -6,9 +6,12 @@ import 'primereact/resources/themes/mira/theme.css';
 import { FileUpload } from 'primereact/fileupload';
 import { ProgressBar } from 'primereact/progressbar';
 import { Tag } from 'primereact/tag';
-import Tailwind from "primereact/passthrough/tailwind";
+import JSONPretty from 'react-json-pretty';
+import 'react-json-pretty/themes/monikai.css';
+import JSONPrettyMon from 'react-json-pretty/dist/monikai';
 import axios from 'axios';
 import './App.css';
+import './json.styl';
 
 function App() {
   const [data, setData] = useState('');
@@ -19,7 +22,7 @@ function App() {
 
   const toast = useRef(null);
 
-
+/*
   useEffect(() => {
     axios.get('http://127.0.0.1:8000')
     .then(response => {
@@ -29,6 +32,7 @@ function App() {
       console.error('Error fetching data:', error);
     });
   }, []);
+  */
 
   const documentUploadHandler = ({files}) => {
     const [file] = files;
@@ -54,7 +58,9 @@ function App() {
 
       try {
         let result = await axios.get('http://127.0.0.1:8000/api/info')
-        setInfo(JSON.stringify(result.data));
+        let json_str = '"{'+JSON.stringify(result.data).substring(13, JSON.stringify(result.data).length - 9)+'\\n}"'
+        console.log(json_str)
+        setInfo(JSON.parse(json_str));
         console.log(result.data)
         console.log(info) 
       } catch (error) { 
@@ -97,7 +103,7 @@ function App() {
 
   return (
     <PrimeReactProvider>
-    <div className="App">
+    <div>
       <header className="Gao Document Classification">
         <div className="flex justify-center mt-5">
           <img src={logo} className="app-logo" alt="logo" />
@@ -126,16 +132,17 @@ function App() {
         <div className="flex justify-center dm-sans-heading mt-10">
           <h1 className="text-xl">Classification Result</h1>
         </div>
-        <div className='mt-4 dm-sans-body'>
+        <div className='mt-4 dm-sans-body flex justify-center'>
           <p>This document falls under <span className='code'>{doc_type}</span> with a confidence of <span className='code'>{confidence}</span>.</p>
         </div>
         <div className="flex justify-center dm-sans-heading mt-10">
           <h1 className="text-xl">Information Extraction</h1>
         </div>
-        <p>{info}</p>
-        <p>{data}</p>
-      </header>
-    </div>
+        <div className='mt-2 mb-12 flex justify-center'>
+          <JSONPretty id="json-pretty" booleanStyle="color: #000000;" stringStyle="color: #000000;" valueStyle="color: #000000;" mainStyle="background-color: #FFFFFF; color: #FFFFFF; font-size: 0.9em; font-family: 'DM Mono', monospace; font-weight: 500; font-style: normal;" keyStyle="background-color: #E6E6E6; padding: 3px 10px 3px 10px; width: auto; border-radius: 8px; line-height: 250%; color: rgb(94, 129, 172);" data={info}></JSONPretty>
+        </div>
+        </header>
+      </div>
     </PrimeReactProvider>
   );
 }

@@ -4,10 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-.App {
-  text-align: center;
-}
-
 .p-fileupload-buttonbar {
   justify-content: center;
 }
