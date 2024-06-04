@@ -205,35 +205,37 @@ if __name__ == "__main__":
 
 #-------------------------LangChain--------------------------#
 
-def langchain():
+def langchain(doc_path):
     global langchaindocs
     from langchain_community.document_loaders import AzureAIDocumentIntelligenceLoader
 
     loader = AzureAIDocumentIntelligenceLoader(
-        api_endpoint=ENDPOINT, api_key=KEY, file_path=sample_file, api_model="prebuilt-layout"
+        api_endpoint=ENDPOINT, api_key=KEY, file_path=doc_path, api_model="prebuilt-layout"
     )
 
     langchaindocs = loader.load()
     print(langchaindocs[0])
+    return langchaindocs[0]
 
 if __name__ == "__main__":
-    langchain()
+    langchain(sample_file)
 
 #-------------------------LangChain Cohere LLM--------------------------#
 
-def llm():
+def llm(langchain_doc, doc_type):
     from langchain_cohere import ChatCohere, CohereRagRetriever
     from langchain_core.documents import Document
 
     cohere_key = os.environ["COHERE_API_KEY"]
 
     # User query we will use for the generation
+    doc_type_id = doc_type
     print("doc_type_id: " + doc_type_id)
-    boilerplate = "You are a helpful AI assistant. Please answer each question on a separate line. Just give the answer and don't include any additional words."
+    boilerplate = "You are a helpful AI assistant. Please output your answers to the questions as a JSON. Answer questions about different topics as separate fields (e.g. sender, receiver, bank). Put related information in the same field (e.g. multiple dollar amounts). Just put the answer and don't include anything additional."
     if doc_type_id == "cash_flows":
         user_query = boilerplate + "What is the most recent date of this cash flow document?"
     elif doc_type_id == "emails":
-        user_query = boilerplate + "What is the date this email was sent? What is name of the sender? What is the name of the receiver? If you can find a dollar amount in the email, what is the dollar amount?"
+        user_query = boilerplate + "What is the date this email was sent? What is name of the sender? What is the name of the receiver? If you can find a dollar amount or multiple dollar amounts in the email, what are they?"
     elif doc_type_id  == "board_resolutions":
         user_query = boilerplate + "What is the date of this board resolution? What is the name of the company? What is the title of the resolution (for example, 'Director's Resolution')? If you can find a dollar amount in the board resolution, what is the dollar amount?"
     elif doc_type_id == "letters":
@@ -260,7 +262,7 @@ def llm():
     docs = rag.invoke(
         user_query,
         documents=[
-        langchaindocs[0]
+        langchain_doc
         ],
     )
     answer = docs.pop()
@@ -272,6 +274,7 @@ def llm():
     print("Answer:")
     print(answer.page_content)
     print(answer.metadata["citations"])
+    return answer.page_content
 
 if __name__ == "__main__":
-    llm()
+    llm(langchaindocs[0])

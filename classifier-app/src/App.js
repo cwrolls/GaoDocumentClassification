@@ -15,6 +15,7 @@ function App() {
   const [doc_type, setDocType] = useState('N/A');
   const [confidence, setConfidence] = useState(0.0);
   const [progress_value, setProgressValue] = useState(0);
+  const [info, setInfo] = useState('');
 
   const toast = useRef(null);
 
@@ -50,12 +51,21 @@ function App() {
       setDocType([response.data.classification]);
       setConfidence([response.data.confidence]);
       console.log("Doc type: " + doc_type + "Confidence:" + confidence) 
+
+      try {
+        let result = await axios.get('http://127.0.0.1:8000/api/info')
+        setInfo(JSON.stringify(result.data));
+        console.log(result.data)
+        console.log(info) 
+      } catch (error) { 
+        console.warn('Error fetching info:', error);
+      }
+
     } catch (error) {
       console.warn('Error uploading file:', error);
       alert('Error uploading file');
     }
   };
-
 
   const onUpload = () => {
     toast.current.show({severity: 'info', summary: 'Success', detail: 'File Uploaded'});
@@ -120,8 +130,9 @@ function App() {
           <p>This document falls under <span className='code'>{doc_type}</span> with a confidence of <span className='code'>{confidence}</span>.</p>
         </div>
         <div className="flex justify-center dm-sans-heading mt-10">
-          <h1 className="text-xl">Important Information</h1>
+          <h1 className="text-xl">Information Extraction</h1>
         </div>
+        <p>{info}</p>
         <p>{data}</p>
       </header>
     </div>
