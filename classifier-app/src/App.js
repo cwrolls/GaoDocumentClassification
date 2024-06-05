@@ -7,9 +7,7 @@ import { FileUpload } from 'primereact/fileupload';
 import { ProgressBar } from 'primereact/progressbar';
 import { Tag } from 'primereact/tag';
 import JSONPretty from 'react-json-pretty';
-import 'react-json-pretty/themes/monikai.css';
 import CircularProgress from "@mui/material/CircularProgress";
-import Box from "@mui/material/Box";
 import axios from 'axios';
 import './App.css';
 
@@ -18,7 +16,6 @@ function App() {
   const [info_loading, setInfoLoading] = useState(false);
   const [doc_type, setDocType] = useState('N/A');
   const [confidence, setConfidence] = useState(0.0);
-  const [progress_value, setProgressValue] = useState(0);
   const [info, setInfo] = useState('');
 
   const toast = useRef(null);
@@ -44,7 +41,6 @@ function App() {
     console.log(doc_type)
     let formData = new FormData();
     formData.append('document', document);
-    setProgressValue(0);
     setClassLoading(true);
 
     try {
@@ -53,7 +49,6 @@ function App() {
           'Content-Type': 'multipart/form-data'
         }
       });
-      setProgressValue(100);
       setDocType([response.data.classification]);
       setConfidence([response.data.confidence]);
       setClassLoading(false);
@@ -79,10 +74,6 @@ function App() {
       alert('Error uploading file');
     }
   };
-
-  const onUpload = () => {
-    toast.current.show({severity: 'info', summary: 'Success', detail: 'File Uploaded'});
-  }
 
   const itemTemplate = (file, props) => {
     var display_image;
@@ -133,7 +124,12 @@ function App() {
         <div className = "flex justify-center">
           <FileUpload name="document" customUpload uploadHandler={documentUploadHandler} auto url={'/api/upload'} 
           accept="image/jpeg,image/png,application/pdf" maxFileSize={4000000} itemTemplate={itemTemplate}
-          onUpload={onUpload} progressBarTemplate={<ProgressBar value={progress_value} showValue={false}></ProgressBar>} 
+          progressBarTemplate=
+          {class_loading ? (
+            <ProgressBar mode="indeterminate" style={{height: '4px'}}></ProgressBar>
+          ) : (
+            <ProgressBar mode="indeterminate" style={{height: '0px'}}></ProgressBar>
+          )}
           emptyTemplate={<p className="mt-[-7%]">Drag and drop files to here to upload.</p>} />
         </div>
         <div className="flex justify-center dm-sans-heading mt-10">
