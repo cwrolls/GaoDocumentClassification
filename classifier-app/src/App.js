@@ -52,7 +52,7 @@ function App() {
       setDocType([response.data.classification]);
       setConfidence([response.data.confidence]);
       setClassLoading(false);
-      console.log("Doc type: " + doc_type + "Confidence:" + confidence) 
+      console.log("Doc type: " + doc_type + ", Confidence:" + confidence) 
 
       try {
         setInfoLoading(true);
