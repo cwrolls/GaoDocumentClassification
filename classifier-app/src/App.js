@@ -14,6 +14,7 @@ import './App.css';
 function App() {
   const [class_loading, setClassLoading] = useState(false);
   const [info_loading, setInfoLoading] = useState(false);
+  const [file_name, setFilename] = useState('N/A');
   const [doc_type, setDocType] = useState('N/A');
   const [confidence, setConfidence] = useState(0.0);
   const [info, setInfo] = useState('');
@@ -42,6 +43,8 @@ function App() {
     let formData = new FormData();
     formData.append('document', document);
     setClassLoading(true);
+
+    formData.get('document').name === 'blob' ? setFilename('blobs') : setFilename(formData.get('document').name);
 
     try {
       let response = await axios.post('http://127.0.0.1:8000/api/upload', formData, {
@@ -77,6 +80,7 @@ function App() {
 
   const itemTemplate = (file, props) => {
     var display_image;
+
     if (file.type === 'application/pdf') {
       display_image=<img alt={"pdf logo"} role="presentation" src={pdfLogo} width={100} />
     } else{
@@ -136,7 +140,7 @@ function App() {
           <h1 className="text-xl">Classification Result</h1>
         </div>
         <div className='mt-4 dm-sans-body flex justify-center'>
-          <p>This document falls under {" "}
+          <p><span className = "code">{file_name}</span> falls under {" "}
             <span className='code'> 
               {class_loading ? ( 
                 <CircularProgress color="inherit" size={12} thickness={4}/>
