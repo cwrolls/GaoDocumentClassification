@@ -35,14 +35,15 @@ def upload_file():
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             print("file_path from upload: " + file_path)
             file.save(file_path)
-            class_result = classify_document("model5", file_path)
+            class_result = classify_document("model6", file_path)
             my_json = json.loads(class_result)
             print(f"Classification result: {class_result}")
             return jsonify({"status": "post_success", "classification": my_json['classification'], "confidence": my_json['confidence']})
-
+        
         except Exception as e:
             print(f"Couldn't upload document: {e}")
             return jsonify({"status": "failed", "error": str(e)})
+    
     else:
         my_json = json.loads(class_result)
         return jsonify({"status": "post_success", "classification": my_json['classification'], "confidence": my_json['confidence']})

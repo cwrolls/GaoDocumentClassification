@@ -5,6 +5,7 @@ import { PrimeReactProvider, PrimeReactContext } from 'primereact/api';
 import 'primereact/resources/themes/mira/theme.css';
 import { FileUpload } from 'primereact/fileupload';
 import { ProgressBar } from 'primereact/progressbar';
+import classNames from 'classnames';
 import { Tag } from 'primereact/tag';
 import JSONPretty from 'react-json-pretty';
 import CircularProgress from "@mui/material/CircularProgress";
@@ -19,7 +20,7 @@ function App() {
   const [confidence, setConfidence] = useState(0.0);
   const [info, setInfo] = useState('');
 
-  const toast = useRef(null);
+  const firstRender = useFirstRender();
 
 /*
   useEffect(() => {
@@ -33,9 +34,19 @@ function App() {
   }, []);
   */
 
+  function useFirstRender() {
+    const ref = useRef(true);
+    const firstRender = ref.current;
+    ref.current = false;
+    return firstRender;
+  }
+
   const documentUploadHandler = ({files}) => {
-    const [file] = files;
-    uploadDoc(file);
+    // const [file] = files;
+    // uploadDoc(file);
+    for (const file of files) {
+      uploadDoc(file);
+    }
   };
 
   const uploadDoc = async (document) => {
@@ -47,6 +58,7 @@ function App() {
     formData.get('document').name === 'blob' ? setFilename('blobs') : setFilename(formData.get('document').name);
 
     try {
+
       let response = await axios.post('http://127.0.0.1:8000/api/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -55,7 +67,11 @@ function App() {
       setDocType([response.data.classification]);
       setConfidence([response.data.confidence]);
       setClassLoading(false);
-      console.log("Doc type: " + doc_type + ", Confidence:" + confidence) 
+      console.log("Doc type: " + doc_type + ", Confidence:" + confidence)
+
+     /*  
+      setDocType("remittance");
+      setClassLoading(false); */
 
       try {
         setInfoLoading(true);
@@ -82,23 +98,21 @@ function App() {
     var display_image;
 
     if (file.type === 'application/pdf') {
-      display_image=<img alt={"pdf logo"} role="presentation" src={pdfLogo} width={100} />
+      display_image=<img alt={"pdf logo"} role="presentation" src={pdfLogo} width={40} />
     } else{
-      display_image=<img alt={""} role="presentation" src={file.objectURL} width={100} />
+      display_image=<img alt={""} role="presentation" src={file.objectURL} width={40} />
     }
     return (
-        <div className="flex align-items-center flex-wrap grid-cols-3 gap-10">
-            <div className="flex align-items-center max-h-28">
-              {display_image}
-            </div>
-            <div className='flex items-center'>
-              <div>
-                <span className="flex flex-column text-left ml-3">{file.name}</span>
-              </div>
-            </div>
-            <div className='flex items-center'>
-            <Tag value={props.formatSize} severity="warning" className="px-3 py-2" />
-            </div>
+        <div className="flex align-items-center flex-wrap grid-cols-3 gap-6 ">
+          <div className="flex align-items-center max-h-28">
+            {display_image}
+          </div>
+          <div className='flex items-center'>
+            <span className="flex flex-column text-left ml-3">{file.name}</span>
+          </div>
+          <div className='flex items-center'>
+            <Tag value={props.formatSize} severity="success" className="px-3 py-2" />
+          </div>
         </div>
     )
   }
@@ -126,7 +140,7 @@ function App() {
           <p className="flex justify-center dm-sans-body mt-3">Please make sure that your file is a pdf, png, or jpeg. The maximimum file size is 4 MB.</p>
         </div>
         <div className = "flex justify-center">
-          <FileUpload name="document" customUpload uploadHandler={documentUploadHandler} auto url={'/api/upload'} 
+          <FileUpload name="document" customUpload multiple uploadHandler={documentUploadHandler} auto url={'/api/upload'} 
           accept="image/jpeg,image/png,application/pdf" maxFileSize={4000000} itemTemplate={itemTemplate}
           progressBarTemplate=
           {class_loading ? (
@@ -134,7 +148,15 @@ function App() {
           ) : (
             <ProgressBar mode="indeterminate" style={{height: '0px'}}></ProgressBar>
           )}
-          emptyTemplate={<p className="mt-[-7%]">Drag and drop files to here to upload.</p>} />
+          emptyTemplate={<p className="mt-[-7%]">Drag and drop files to here to upload.</p>} 
+          pt= {{
+            content: { className: firstRender ? ('justify-center relative items-center bg-slate-100') : ('justify-center relative bg-slate-100') },
+            // content: { className: 'justify-center relative bg-slate-100 flex-wrap' },
+            file: { className: classNames('flex items-center flex-wrap w-72', 'border border-gray-300 border-2 rounded gap-2 gap-x-2 mb-2 mr-2')},
+            chooseButton: { className: 'choose-button fill flex items-center'},
+            chooseIcon: { className: 'ml-3'},
+          }}
+          />
         </div>
         <div className="flex justify-center dm-sans-heading mt-10">
           <h1 className="text-xl">Classification Result</h1>

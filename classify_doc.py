@@ -1,6 +1,5 @@
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from dotenv import load_dotenv
-
 import os, magic, logging, json, time
 from requests import post, get
 from azure.ai.documentintelligence.models import ClassifyDocumentRequest
@@ -19,12 +18,13 @@ sample_file_array = [sample_file]
 
 #-------------------------Azure Custom Classification--------------------------#
 
-file_type = magic.from_file(sample_file, mime=True)
+file_type = ""
 doc_type_id = ""
 langchaindocs = []
 
 def classify_document(classifier_id, doc_path):
     global doc_type_id
+    global file_type
     
     # [START classify_document]
     from azure.core.credentials import AzureKeyCredential
@@ -36,17 +36,22 @@ def classify_document(classifier_id, doc_path):
     classifier_id = os.getenv("CLASSIFIER_ID", classifier_id)
 
     document_intelligence_client = DocumentIntelligenceClient(endpoint=endpoint, credential=AzureKeyCredential(key))
+    file_type = magic.from_file(doc_path, mime=True)
+
     if file_type == "image/jpeg":
+      print("found jpeg")
       with open(doc_path, "rb") as f:
           poller = document_intelligence_client.begin_classify_document(
               classifier_id, classify_request=f, content_type="image/jpeg"
           )
     elif file_type == "image/png":
+      print("found png")
       with open(doc_path, "rb") as f:
           poller = document_intelligence_client.begin_classify_document(
               classifier_id, classify_request=f, content_type="image/png"
           )
     else:
+      print("found pdf")
       with open(doc_path, "rb") as f:
           poller = document_intelligence_client.begin_classify_document(
               classifier_id, classify_request=f, content_type="application/pdf"
@@ -210,7 +215,7 @@ def langchain(doc_path):
     from langchain_community.document_loaders import AzureAIDocumentIntelligenceLoader
 
     loader = AzureAIDocumentIntelligenceLoader(
-        api_endpoint=ENDPOINT, api_key=KEY, file_path=doc_path, api_model="prebuilt-layout"
+        api_endpoint=os.environ["AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"], api_key=os.environ["AZURE_DOCUMENT_INTELLIGENCE_KEY"], file_path=doc_path, api_model="prebuilt-layout"
     )
 
     langchaindocs = loader.load()
@@ -250,6 +255,8 @@ def llm(langchain_doc, doc_type):
         user_query = boilerplate + "What is the most recent date on this balance sheet?"
     elif doc_type_id == "bank_statements":
         user_query = boilerplate + "What is the name of the bank? What is the name of the company or person of this bank statement? What is the first date on the document? What is the opening balance? What is the closing balance?"
+    elif doc_type_id == "text_messages":
+        user_query = boilerplate + "What is the date of this text conersation? Who are all the people involved in the text conversation?"
     else: 
         print(doc_type_id)
         user_query = "Error classifying your document, please try again."
