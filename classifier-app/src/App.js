@@ -10,6 +10,7 @@ import { Tag } from 'primereact/tag';
 import JSONPretty from 'react-json-pretty';
 import CircularProgress from "@mui/material/CircularProgress";
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 import './App.css';
 
 function App() {
@@ -43,21 +44,30 @@ function App() {
   }
 
   const documentUploadHandler = ({files}) => {
-    // const [file] = files;
-    // uploadDoc(file);
-    for (const file of files) {
-      uploadDoc(file);
-    }
-    setFiles(files);
+    // for (const file of files) {
+    //   uploadDoc(file);
+    // }
+    // setFiles(files);
+    const newFiles = Array.from(files).map(file => ({
+      id: uuidv4(),
+      file,
+      name: file.name,
+      docType: '',
+      confidence: 0,
+      info: {},
+      classLoading: true,
+      infoLoading: false,
+    }));
+
+    newFiles.forEach(fileData => uploadDoc(fileData));
+    setFiles(prevFiles => [...prevFiles, ...newFiles]);
   };
 
   const uploadDoc = async (document) => {
-    console.log(doc_type)
+    const { id, file } = document;
+   
     let formData = new FormData();
-    formData.append('document', document);
-    setClassLoading(oldArray => [...oldArray, true]);
-
-    formData.get('document').name === 'blob' ? setFilename('blobs') : setFilename(formData.get('document').name);
+    formData.append('document', file);
 
     try {
 
@@ -66,44 +76,39 @@ function App() {
           'Content-Type': 'multipart/form-data'
         }
       });
-      setDocType(oldArray => [...oldArray, response.data.classification]);
-      setConfidence(oldArray => [...oldArray, response.data.confidence]);
-      // setClassLoading(info_loading.splice(setClassLoading.length - 1, 1, false));
-      setClassLoading(oldArray => {
-        const newArray = [...oldArray];
-        newArray[oldArray.length - 1] = false;
-        return newArray;
-      });
-      console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence)
-
+      const updatedFileData = {
+        ...document,
+        docType: response.data.classification,
+        confidence: response.data.confidence,
+        classLoading: false,
+        infoLoading: true,
+      };
+      setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileData : file));
+      console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence);
       
       // setDocType(["remittances","text_messages"]);
       // setConfidence([89.9,90.1]);
       // setClassLoading([false,false]);
 
       try {
-        setInfoLoading(oldArray => [...oldArray, true]);
-        console.log('info before');
-        console.info({info_loading});
-        let result = await axios.get('http://127.0.0.1:8000/api/info')
+        let result = await axios.get(`http://127.0.0.1:8000/api/info`);
         let json_str = '"{'+JSON.stringify(result.data).substring(13, JSON.stringify(result.data).length - 9)+'\\n}"'
         console.log(json_str)
-        setInfo(oldArray => [...oldArray, JSON.parse(json_str)]);
-        // setInfoLoading(info_loading.splice(setInfoLoading.length - 1, 1, false));
-        setClassLoading(oldArray => {
-          const newArray = [...oldArray];
-          newArray[oldArray.length - 1] = false;
-          return newArray;
-        });
-        console.log('info after');
-        console.info({info_loading});
+
+        const updatedFileInfo = {
+          ...updatedFileData,
+          info: JSON.parse(json_str),
+          infoLoading: false,
+        };
+        
+        setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileInfo : file));
       } catch (error) { 
-        setInfoLoading(info_loading.splice(setInfoLoading.length - 1, 1, false));
+        setFiles(prevFiles => prevFiles.map(file => file.id === id ? { ...file, infoLoading: false } : file));
         console.warn('Error fetching info:', error);
       }
 
     } catch (error) {
-      setClassLoading(info_loading.splice(setClassLoading.length - 1, 1, false));
+      setFiles(prevFiles => prevFiles.map(file => file.id === id ? { ...file, classLoading: false } : file));
       console.warn('Error uploading file:', error);
       alert('Error uploading file');
     }
@@ -176,54 +181,54 @@ function App() {
         <div className="flex justify-center dm-sans-heading mt-10">
           <h1 className="text-xl">Classification Result</h1>
         </div>
-        {files.map((file, index) => (
-          <div key={index} className='mt-4 dm-sans-body flex justify-center'>
+        {files.map((file) => (
+            <div key={file.id} className='mt-4 dm-sans-body flex justify-center'>
               <p>
-                  <span className="code">{file.name}</span> falls under {" "}
-                  <span className='code'> 
-                      {class_loading[index] ? ( 
-                          <CircularProgress color="inherit" size={12} thickness={4}/>
-                      ) : (
-                          doc_type[index]
-                      )}
-                  </span> 
-                  {" "} with a confidence of {" "}
-                  <span className='code'> 
-                      {class_loading[index] ? ( 
-                          <CircularProgress color="inherit" size={12} thickness={4}/>
-                      ) : (
-                          confidence[index]
-                      )}
-                  </span> 
-                  .
+                <span className="code">{file.name}</span> falls under {" "}
+                <span className='code'>
+                  {file.classLoading ? (
+                    <CircularProgress color="inherit" size={12} thickness={4} />
+                  ) : (
+                    file.docType
+                  )}
+                </span>
+                {" "} with a confidence of {" "}
+                <span className='code'>
+                  {file.classLoading ? (
+                    <CircularProgress color="inherit" size={12} thickness={4} />
+                  ) : (
+                    file.confidence
+                  )}
+                </span>
+                .
               </p>
-          </div>
-        ))}
+            </div>
+          ))}
         <div className="flex justify-center dm-sans-heading mt-10">
           <h1 className="text-xl">Information Extraction</h1>
         </div>
-        {files.map((file, index) => (
-          <div key={index} className="grid-cols-2 gap-8 flex justify-center">
-            <div className = "align-top mt-8">
-              <p className="dm-sans-body flex justify-center"><span className="code">{file.name}</span></p>
-            </div>
-            <div className='mt-2 mb-6 flex justify-center align-top'>
-                {info_loading[index] ? ( 
-                    <CircularProgress className="mt-8" color="inherit" size={20} thickness={6} />
+        {files.map((file) => (
+            <div key={file.id} className="grid-cols-2 gap-8 flex justify-center">
+              <div className="align-top mt-8">
+                <p className="dm-sans-body flex justify-center"><span className="code">{file.name}</span></p>
+              </div>
+              <div className='mt-2 mb-2 flex justify-center align-top'>
+                {file.infoLoading ? (
+                  <CircularProgress className="mt-8" color="inherit" size={20} thickness={6} />
                 ) : (
-                    <JSONPretty 
-                        id="json-pretty"
-                        booleanStyle="color: #000000;" 
-                        stringStyle="color: #000000;" 
-                        valueStyle="color: #000000;" 
-                        mainStyle="background-color: #FFFFFF; color: #FFFFFF; font-size: 0.9em; font-family: 'DM Mono', monospace; font-weight: 500; font-style: normal;" 
-                        keyStyle="background-color: #E6E6E6; padding: 3px 10px 3px 10px; width: auto; border-radius: 8px; line-height: 250%; color: rgb(94, 129, 172);" 
-                        data={info[index]}
-                    ></JSONPretty>
+                  <JSONPretty
+                    id="json-pretty"
+                    booleanStyle="color: #000000;"
+                    stringStyle="color: #000000;"
+                    valueStyle="color: #000000;"
+                    mainStyle="background-color: #FFFFFF; color: #FFFFFF; font-size: 0.9em; font-family: 'DM Mono', monospace; font-weight: 500; font-style: normal;"
+                    keyStyle="background-color: #E6E6E6; padding: 3px 10px 3px 10px; width: auto; border-radius: 8px; line-height: 250%; color: rgb(94, 129, 172);"
+                    data={file.info}
+                  />
                 )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
         {/* <div className='mt-2 mb-12 flex justify-center'>
           {(class_loading || info_loading) ? ( 
             <CircularProgress className = "mt-8" color="inherit" size={20} thickness={6}/>

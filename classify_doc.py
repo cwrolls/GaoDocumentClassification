@@ -256,7 +256,7 @@ def llm(langchain_doc, doc_type):
     elif doc_type_id == "bank_statements":
         user_query = boilerplate + "What is the name of the bank? What is the name of the company or person of this bank statement? What is the first date on the document? What is the opening balance? What is the closing balance?"
     elif doc_type_id == "text_messages":
-        user_query = boilerplate + "What is the date of this text conersation? Who are all the people involved in the text conversation?"
+        user_query = boilerplate + "What is the date of this text conversation? Who are all the people involved in the text conversation?"
     else: 
         print(doc_type_id)
         user_query = "Error classifying your document, please try again."

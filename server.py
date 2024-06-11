@@ -56,6 +56,7 @@ def extract_info():
     if request.method == 'GET':
         try:
             langchain_res = langchain(file_path)
+            print("Extracting info from " + file_path)
             print(langchain_res)
 
             my_json = json.loads(class_result)
