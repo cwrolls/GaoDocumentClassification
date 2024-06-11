@@ -219,7 +219,7 @@ def langchain(doc_path):
     )
 
     langchaindocs = loader.load()
-    print(langchaindocs[0])
+    # print(langchaindocs[0])
     return langchaindocs[0]
 
 if __name__ == "__main__":
@@ -275,12 +275,12 @@ def llm(langchain_doc, doc_type):
     answer = docs.pop()
 
     print("Relevant documents:")
-    print(docs)
+    # print(docs)
 
     print(f"Question: {user_query}")
     print("Answer:")
     print(answer.page_content)
-    print(answer.metadata["citations"])
+    # print(answer.metadata["citations"])
     return answer.page_content
 
 if __name__ == "__main__":

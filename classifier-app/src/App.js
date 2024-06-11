@@ -13,12 +13,13 @@ import axios from 'axios';
 import './App.css';
 
 function App() {
-  const [class_loading, setClassLoading] = useState(false);
-  const [info_loading, setInfoLoading] = useState(false);
+  const [class_loading, setClassLoading] = useState([]);
+  const [info_loading, setInfoLoading] = useState([]);
   const [file_name, setFilename] = useState('N/A');
-  const [doc_type, setDocType] = useState('N/A');
-  const [confidence, setConfidence] = useState(0.0);
-  const [info, setInfo] = useState('');
+  const [doc_type, setDocType] = useState([]);
+  const [confidence, setConfidence] = useState([]);
+  const [info, setInfo] = useState([]);
+  const [files, setFiles] = useState([]);
 
   const firstRender = useFirstRender();
 
@@ -47,13 +48,14 @@ function App() {
     for (const file of files) {
       uploadDoc(file);
     }
+    setFiles(files);
   };
 
   const uploadDoc = async (document) => {
     console.log(doc_type)
     let formData = new FormData();
     formData.append('document', document);
-    setClassLoading(true);
+    setClassLoading(oldArray => [...oldArray, true]);
 
     formData.get('document').name === 'blob' ? setFilename('blobs') : setFilename(formData.get('document').name);
 
@@ -64,31 +66,44 @@ function App() {
           'Content-Type': 'multipart/form-data'
         }
       });
-      setDocType([response.data.classification]);
-      setConfidence([response.data.confidence]);
-      setClassLoading(false);
-      console.log("Doc type: " + doc_type + ", Confidence:" + confidence)
+      setDocType(oldArray => [...oldArray, response.data.classification]);
+      setConfidence(oldArray => [...oldArray, response.data.confidence]);
+      // setClassLoading(info_loading.splice(setClassLoading.length - 1, 1, false));
+      setClassLoading(oldArray => {
+        const newArray = [...oldArray];
+        newArray[oldArray.length - 1] = false;
+        return newArray;
+      });
+      console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence)
 
-     /*  
-      setDocType("remittance");
-      setClassLoading(false); */
+      
+      // setDocType(["remittances","text_messages"]);
+      // setConfidence([89.9,90.1]);
+      // setClassLoading([false,false]);
 
       try {
-        setInfoLoading(true);
+        setInfoLoading(oldArray => [...oldArray, true]);
+        console.log('info before');
+        console.info({info_loading});
         let result = await axios.get('http://127.0.0.1:8000/api/info')
         let json_str = '"{'+JSON.stringify(result.data).substring(13, JSON.stringify(result.data).length - 9)+'\\n}"'
         console.log(json_str)
-        setInfo(JSON.parse(json_str));
-        console.log(result.data)
-        console.log(info) 
-        setInfoLoading(false);
+        setInfo(oldArray => [...oldArray, JSON.parse(json_str)]);
+        // setInfoLoading(info_loading.splice(setInfoLoading.length - 1, 1, false));
+        setClassLoading(oldArray => {
+          const newArray = [...oldArray];
+          newArray[oldArray.length - 1] = false;
+          return newArray;
+        });
+        console.log('info after');
+        console.info({info_loading});
       } catch (error) { 
-        setInfoLoading(true);
+        setInfoLoading(info_loading.splice(setInfoLoading.length - 1, 1, false));
         console.warn('Error fetching info:', error);
       }
 
     } catch (error) {
-      setClassLoading(false);
+      setClassLoading(info_loading.splice(setClassLoading.length - 1, 1, false));
       console.warn('Error uploading file:', error);
       alert('Error uploading file');
     }
@@ -143,7 +158,7 @@ function App() {
           <FileUpload name="document" customUpload multiple uploadHandler={documentUploadHandler} auto url={'/api/upload'} 
           accept="image/jpeg,image/png,application/pdf" maxFileSize={4000000} itemTemplate={itemTemplate}
           progressBarTemplate=
-          {class_loading ? (
+          {class_loading[0] ? (
             <ProgressBar mode="indeterminate" style={{height: '4px'}}></ProgressBar>
           ) : (
             <ProgressBar mode="indeterminate" style={{height: '0px'}}></ProgressBar>
@@ -161,33 +176,61 @@ function App() {
         <div className="flex justify-center dm-sans-heading mt-10">
           <h1 className="text-xl">Classification Result</h1>
         </div>
-        <div className='mt-4 dm-sans-body flex justify-center'>
-          <p><span className = "code">{file_name}</span> falls under {" "}
-            <span className='code'> 
-              {class_loading ? ( 
-                <CircularProgress color="inherit" size={12} thickness={4}/>
-              ) : (
-                doc_type
-              )}</span> 
-            {" "} with a confidence of {" "}
-            <span className='code'> 
-              {class_loading ? ( 
-                <CircularProgress color="inherit" size={12} thickness={4}/>
-              ) : (
-                confidence
-              )}</span> 
-            .</p>
-        </div>
+        {files.map((file, index) => (
+          <div key={index} className='mt-4 dm-sans-body flex justify-center'>
+              <p>
+                  <span className="code">{file.name}</span> falls under {" "}
+                  <span className='code'> 
+                      {class_loading[index] ? ( 
+                          <CircularProgress color="inherit" size={12} thickness={4}/>
+                      ) : (
+                          doc_type[index]
+                      )}
+                  </span> 
+                  {" "} with a confidence of {" "}
+                  <span className='code'> 
+                      {class_loading[index] ? ( 
+                          <CircularProgress color="inherit" size={12} thickness={4}/>
+                      ) : (
+                          confidence[index]
+                      )}
+                  </span> 
+                  .
+              </p>
+          </div>
+        ))}
         <div className="flex justify-center dm-sans-heading mt-10">
           <h1 className="text-xl">Information Extraction</h1>
         </div>
-        <div className='mt-2 mb-12 flex justify-center'>
+        {files.map((file, index) => (
+          <div key={index} className="grid-cols-2 gap-8 flex justify-center">
+            <div className = "align-top mt-8">
+              <p className="dm-sans-body flex justify-center"><span className="code">{file.name}</span></p>
+            </div>
+            <div className='mt-2 mb-6 flex justify-center align-top'>
+                {info_loading[index] ? ( 
+                    <CircularProgress className="mt-8" color="inherit" size={20} thickness={6} />
+                ) : (
+                    <JSONPretty 
+                        id="json-pretty"
+                        booleanStyle="color: #000000;" 
+                        stringStyle="color: #000000;" 
+                        valueStyle="color: #000000;" 
+                        mainStyle="background-color: #FFFFFF; color: #FFFFFF; font-size: 0.9em; font-family: 'DM Mono', monospace; font-weight: 500; font-style: normal;" 
+                        keyStyle="background-color: #E6E6E6; padding: 3px 10px 3px 10px; width: auto; border-radius: 8px; line-height: 250%; color: rgb(94, 129, 172);" 
+                        data={info[index]}
+                    ></JSONPretty>
+                )}
+            </div>
+          </div>
+        ))}
+        {/* <div className='mt-2 mb-12 flex justify-center'>
           {(class_loading || info_loading) ? ( 
             <CircularProgress className = "mt-8" color="inherit" size={20} thickness={6}/>
           ) : (
             <JSONPretty id="json-pretty" booleanStyle="color: #000000;" stringStyle="color: #000000;" valueStyle="color: #000000;" mainStyle="background-color: #FFFFFF; color: #FFFFFF; font-size: 0.9em; font-family: 'DM Mono', monospace; font-weight: 500; font-style: normal;" keyStyle="background-color: #E6E6E6; padding: 3px 10px 3px 10px; width: auto; border-radius: 8px; line-height: 250%; color: rgb(94, 129, 172);" data={info}></JSONPretty>
           )}
-        </div>
+        </div> */}
         </header>
       </div>
     </PrimeReactProvider>
