@@ -76,6 +76,8 @@ function App() {
           'Content-Type': 'multipart/form-data'
         }
       });
+      const { file_id } = response.data;
+
       const updatedFileData = {
         ...document,
         docType: response.data.classification,
@@ -91,7 +93,7 @@ function App() {
       // setClassLoading([false,false]);
 
       try {
-        let result = await axios.get(`http://127.0.0.1:8000/api/info`);
+        let result = await axios.get(`http://127.0.0.1:8000/api/info?file_id=${file_id}`);
         let json_str = '"{'+JSON.stringify(result.data).substring(13, JSON.stringify(result.data).length - 9)+'\\n}"'
         console.log(json_str)
 
@@ -171,8 +173,7 @@ function App() {
           emptyTemplate={<p className="mt-[-7%]">Drag and drop files to here to upload.</p>} 
           pt= {{
             content: { className: firstRender ? ('justify-center relative items-center bg-slate-100') : ('justify-center relative bg-slate-100') },
-            // content: { className: 'justify-center relative bg-slate-100 flex-wrap' },
-            file: { className: classNames('flex items-center flex-wrap w-72', 'border border-gray-300 border-2 rounded gap-2 gap-x-2 mb-2 mr-2')},
+            file: { className: classNames('flex items-center flex-wrap w-72 h-28', 'border border-gray-300 border-2 rounded gap-2 gap-x-2 mb-2 mr-2')},
             chooseButton: { className: 'choose-button fill flex items-center'},
             chooseIcon: { className: 'ml-3'},
           }}
