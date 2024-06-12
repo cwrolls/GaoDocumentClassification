@@ -5,10 +5,12 @@ import { PrimeReactProvider, PrimeReactContext } from 'primereact/api';
 import 'primereact/resources/themes/mira/theme.css';
 import { FileUpload } from 'primereact/fileupload';
 import { ProgressBar } from 'primereact/progressbar';
+import { Button } from 'primereact/button';
 import classNames from 'classnames';
 import { Tag } from 'primereact/tag';
 import JSONPretty from 'react-json-pretty';
 import CircularProgress from "@mui/material/CircularProgress";
+import ClearOutlinedIcon from '@mui/icons-material/ClearOutlined';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import './App.css';
@@ -23,6 +25,13 @@ function App() {
   const [files, setFiles] = useState([]);
 
   const firstRender = useFirstRender();
+  const uploadRef = useRef(null);
+
+  const clearFiles = () => {
+    uploadRef.current.clear()
+    setFiles([]);
+  }
+
 
 /*
   useEffect(() => {
@@ -162,22 +171,29 @@ function App() {
           <p className="flex justify-center dm-sans-body mt-3">Please make sure that your file is a pdf, png, or jpeg. The maximimum file size is 4 MB.</p>
         </div>
         <div className = "flex justify-center">
-          <FileUpload name="document" customUpload multiple uploadHandler={documentUploadHandler} auto url={'/api/upload'} 
-          accept="image/jpeg,image/png,application/pdf" maxFileSize={4000000} itemTemplate={itemTemplate}
+          <FileUpload name="document" ref={uploadRef} customUpload multiple uploadHandler={documentUploadHandler} auto 
+          url={'/api/upload'} accept="image/jpeg,image/png,application/pdf" maxFileSize={4000000} itemTemplate={itemTemplate}
           progressBarTemplate=
-          {class_loading[0] ? (
+          {(files.size > 0 && files[0].classLoading) ? (
             <ProgressBar mode="indeterminate" style={{height: '4px'}}></ProgressBar>
           ) : (
             <ProgressBar mode="indeterminate" style={{height: '0px'}}></ProgressBar>
           )}
           emptyTemplate={<p className="mt-[-7%]">Drag and drop files to here to upload.</p>} 
-          pt= {{
+          pt = {{
             content: { className: firstRender ? ('justify-center relative items-center bg-slate-100') : ('justify-center relative bg-slate-100') },
             file: { className: classNames('flex items-center flex-wrap w-72 h-28', 'border border-gray-300 border-2 rounded gap-2 gap-x-2 mb-2 mr-2')},
             chooseButton: { className: 'choose-button fill flex items-center'},
             chooseIcon: { className: 'ml-3'},
           }}
           />
+        </div>
+        <div className='flex justify-center mt-4'>
+            <Button label="Clear" raised icon={(options) => <ClearOutlinedIcon {...options.iconProps} />} className='clear-button'
+            onClick={clearFiles}
+            pt={{
+              icon: {className: 'ml-2'},
+            }}/>
         </div>
         <div className="flex justify-center dm-sans-heading mt-10">
           <h1 className="text-xl">Classification Result</h1>
