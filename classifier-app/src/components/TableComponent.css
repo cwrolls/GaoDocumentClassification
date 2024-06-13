@@ -1,0 +1,22 @@
+table { 
+    border: 1px solid #dfdfdf; 
+    border-collapse: collapse; 
+  }
+  th { 
+    background-color: #efefef; 
+    text-align: left; 
+    font-family: "DM Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+  }
+  td { 
+    border: 1px solid #efefef; 
+    font-family: "DM Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 300;
+    font-style: normal;
+  }
+  td, th { 
+    padding: 0.4em; 
+  }
