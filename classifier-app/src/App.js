@@ -1,14 +1,13 @@
 import logo from './logo.png';
 import pdfLogo from './pdf_logo.png';
-import React, { useState, useEffect, useRef } from "react";
-import { PrimeReactProvider, PrimeReactContext } from 'primereact/api';
+import React, { useState, useRef } from "react";
+import { PrimeReactProvider } from 'primereact/api';
 import 'primereact/resources/themes/mira/theme.css';
 import { FileUpload } from 'primereact/fileupload';
 import { ProgressBar } from 'primereact/progressbar';
 import { Button } from 'primereact/button';
 import classNames from 'classnames';
 import { Tag } from 'primereact/tag';
-import JSONPretty from 'react-json-pretty';
 import JSONToTable from './components/JSONToTable';
 import CircularProgress from "@mui/material/CircularProgress";
 import ClearOutlinedIcon from '@mui/icons-material/ClearOutlined';
@@ -17,12 +16,6 @@ import { v4 as uuidv4 } from 'uuid';
 import './App.css';
 
 function App() {
-  const [class_loading, setClassLoading] = useState([]);
-  const [info_loading, setInfoLoading] = useState([]);
-  const [file_name, setFilename] = useState('N/A');
-  const [doc_type, setDocType] = useState([]);
-  const [confidence, setConfidence] = useState([]);
-  const [info, setInfo] = useState([]);
   const [files, setFiles] = useState([]);
 
   const firstRender = useFirstRender();
@@ -54,10 +47,6 @@ function App() {
   }
 
   const documentUploadHandler = ({files}) => {
-    // for (const file of files) {
-    //   uploadDoc(file);
-    // }
-    // setFiles(files);
     const newFiles = Array.from(files).map(file => ({
       id: uuidv4(),
       file,
@@ -98,25 +87,29 @@ function App() {
       setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileData : file));
       console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence);
       
-      // setDocType(["remittances","text_messages"]);
-      // setConfidence([89.9,90.1]);
-      // setClassLoading([false,false]);
-
       try {
         let result = await axios.get(`http://127.0.0.1:8000/api/info?file_id=${file_id}`);
-        console.log("result.data: ", result.data)
-        let json_str = "{"+(result.data).substring(11, (result.data).length - 6)+"}";
-        // var no_slashes = json_str.replace(/\\/g, "");
-        // var no_n = no_slashes.replace(/n/g, '')
-        // console.log(no_n)
-        console.log("json_str: ", json_str)
-        console.log("parsed json:")
-        let parsedJson = JSON.parse(json_str)
-        console.log(parsedJson)
+        console.log("result.data: ", result.data);
+        let name = result.data.file_name;
+        let json_str = "{"+((result.data)['json']).substring(11, ((result.data)['json']).length - 6)+"}";
+        console.log("json_str:");
+        console.log(json_str)
 
+        let file_name_json = {"file_name": name};
+        console.log("file_name_json:");
+        console.log(file_name_json);
+
+        let parsedJson = JSON.parse(json_str);
+        console.log("parsed json:");
+        console.log(parsedJson);
+
+        let total_json = Object.assign(file_name_json, parsedJson);
+        console.log("total json:")
+        console.log(total_json)
+        
         const updatedFileInfo = {
           ...updatedFileData,
-          info: parsedJson,
+          info: total_json,
           infoLoading: false,
         };
         
@@ -155,6 +148,19 @@ function App() {
         </div>
     )
   }
+  
+  const groupFilesByDocType = (files) => {
+    return files.reduce((acc, file) => {
+      const { docType } = file;
+      if (!acc[docType]) {
+        acc[docType] = [];
+      }
+      acc[docType].push(file);
+      return acc;
+    }, {});
+  };
+
+  const groupedFiles = groupFilesByDocType(files);
 
   return (
     <PrimeReactProvider>
@@ -229,10 +235,16 @@ function App() {
               </p>
             </div>
           ))}
-        <div className="flex justify-center dm-sans-heading mt-10">
+        <div className="flex justify-center dm-sans-heading mt-10 mb-4">
           <h1 className="text-xl">Information Extraction</h1>
         </div>
-        {files.map((file) => (
+        {Object.entries(groupedFiles).map(([docType, files]) => (
+          <div key={docType} className="flex flex-col items-center mt-4">
+            <h1 className="text-x mb-2 dm-sans-heading">{docType}</h1>
+            <JSONToTable data={files.map(file => file.info)} />
+          </div>
+        ))}
+       {/*  {files.map((file) => (
             <div key={file.id} className="grid-cols-2 gap-8 flex justify-center">
               <div className="align-top mt-8">
                 <p className="dm-sans-body flex justify-center"><span className="code">{file.name}</span></p>
@@ -241,27 +253,11 @@ function App() {
                 {(file.infoLoading || !file.info) ? (
                   <CircularProgress className="mt-8" color="inherit" size={20} thickness={6} />
                 ) : (
-                 /*  <JSONPretty
-                    id="json-pretty"
-                    booleanStyle="color: #000000;"
-                    stringStyle="color: #000000;"
-                    valueStyle="color: #000000;"
-                    mainStyle="background-color: #FFFFFF; color: #FFFFFF; font-size: 0.9em; font-family: 'DM Mono', monospace; font-weight: 500; font-style: normal;"
-                    keyStyle="background-color: #E6E6E6; padding: 3px 10px 3px 10px; width: auto; border-radius: 8px; line-height: 250%; color: rgb(94, 129, 172);"
-                    data={file.info}
-                  /> */
-                  <JSONToTable data={[file.info]}></JSONToTable>
+                  <JSONToTable data={files.map(file => file.info)}></JSONToTable>
                 )}
               </div>
             </div>
-          ))}
-        {/* <div className='mt-2 mb-12 flex justify-center'>
-          {(class_loading || info_loading) ? ( 
-            <CircularProgress className = "mt-8" color="inherit" size={20} thickness={6}/>
-          ) : (
-            <JSONPretty id="json-pretty" booleanStyle="color: #000000;" stringStyle="color: #000000;" valueStyle="color: #000000;" mainStyle="background-color: #FFFFFF; color: #FFFFFF; font-size: 0.9em; font-family: 'DM Mono', monospace; font-weight: 500; font-style: normal;" keyStyle="background-color: #E6E6E6; padding: 3px 10px 3px 10px; width: auto; border-radius: 8px; line-height: 250%; color: rgb(94, 129, 172);" data={info}></JSONPretty>
-          )}
-        </div> */}
+          ))} */}
         </header>
       </div>
     </PrimeReactProvider>

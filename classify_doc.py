@@ -238,25 +238,25 @@ def llm(langchain_doc, doc_type):
     print("doc_type_id: " + doc_type_id)
     boilerplate = "You are a helpful AI assistant. Please output your answers to the questions as a valid JSON file. Answer questions about different topics as separate keys (e.g. sender, receiver, bank). Put related information in the same key (e.g. multiple dollar amounts). Just output the JSON and don't include anything additional."
     if doc_type_id == "cash_flows":
-        user_query = boilerplate + "What is the most recent date of this cash flow document?"
+        user_query = boilerplate + "What is the most recent date of this cash flow document (key should be 'most_recent_date')?"
     elif doc_type_id == "emails":
-        user_query = boilerplate + "What is the date this email was sent? What is name of the sender? What is the name of the receiver? If you can find a dollar amount or multiple dollar amounts in the email, what are they?"
+        user_query = boilerplate + "What is the date this email was sent (key should be 'date')? What is name of the sender (key should be 'sender')? What is the name of the receiver (key should be 'receiver')? If you can find a dollar amount or multiple dollar amounts in the email, what are they (key should be 'dollar_amount(s)')?"
     elif doc_type_id  == "board_resolutions":
-        user_query = boilerplate + "What is the date of this board resolution? What is the name of the company? What is the title of the resolution (for example, 'Director's Resolution')? If you can find a dollar amount in the board resolution, what is the dollar amount?"
+        user_query = boilerplate + "What is the date of this board resolution (key should be 'date')? What is the name of the company (key should be 'company_name')? What is the title of the resolution (for example, 'Director's Resolution') (key should be 'resolution_title')? If you can find a dollar amount in the board resolution, what is the dollar amount? (key should be 'dollar_amount(s)')"
     elif doc_type_id == "letters":
-        user_query = boilerplate + "What is the date this letter was sent? What is name of the sender? What is the name of the receiver? If you can find a company name that the letter is associated with, what is the company name? If you can find a dollar amount in the email, what is the dollar amount?"
+        user_query = boilerplate + "What is the date this letter was sent (key should be 'date')? What is name of the sender (key should be 'sender')? What is the name of the receiver (key should be 'receiver')? If you can find a company name that the letter is associated with, what is the company name (key should be 'company_name')? If you can find a dollar amount in the email, what is the dollar amount (key should be 'dollar_amount(s)')?"
     elif doc_type_id == "income_statements":
-        user_query = boilerplate + "What is the most recent year of this income statement?"
+        user_query = boilerplate + "What is the most recent year of this income statement? (key should be 'most_recent_year')"
     elif doc_type_id == "remittances":
-        user_query = boilerplate + "What is the date of this remittance? What is the name of the bank? What is the name of the sender? What is the name of the receiver? What is the remittance amount?"
+        user_query = boilerplate + "What is the date of this remittance (key should be 'date')? What is the name of the bank (key should be 'bank_name')? What is the name of the sender (key should be 'sender')? What is the name of the receiver (key should be 'receiver')? What is the remittance amount (key should be 'remittance_amount')?"
     elif doc_type_id == "cheques":
-        user_query = boilerplate + "What is the name of the bank? What is the name of the sender? What is the name of the receiver? What is the amount the check is made out for?"
+        user_query = boilerplate + "What is the name of the bank (key should be 'bank_name')? What is the name of the sender (key should be 'sender')? What is the name of the receiver (key should be 'receiver')? What is the amount the check is made out for (key should be 'check_amount')?"
     elif doc_type_id == "balance_sheets":
-        user_query = boilerplate + "What is the most recent date on this balance sheet?"
+        user_query = boilerplate + "What is the most recent date on this balance sheet (key should be 'most_recent_date')?"
     elif doc_type_id == "bank_statements":
-        user_query = boilerplate + "What is the name of the bank? What is the name of the company or person of this bank statement? What is the first date on the document? What is the opening balance? What is the closing balance?"
+        user_query = boilerplate + "What is the name of the bank (key should be 'bank_name')? What is the name of the company or person of this bank statement (key should be 'company_or_person')? What is the first date on the document (key should be 'first_date')? What is the opening balance (key should be 'opening_balance')? What is the closing balance (key should be 'closing_balance')?"
     elif doc_type_id == "text_messages":
-        user_query = boilerplate + "What is the date of this text conversation? Who are all the people involved in the text conversation?"
+        user_query = boilerplate + "What is the date of this text conversation (key should be 'date')? Who are all the people involved in the text conversation? (key should be 'people')"
     else: 
         print(doc_type_id)
         user_query = "Error classifying your document, please try again."

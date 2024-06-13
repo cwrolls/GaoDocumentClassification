@@ -36,7 +36,7 @@ def upload_file():
             file.save(file_path)
             class_result = classify_document("model6", file_path)
             my_json = json.loads(class_result)
-            file_map[file_id] = {"path": file_path, "type": my_json['classification'], "class_res": class_result}
+            file_map[file_id] = {"path": file_path, "name": filename, "type": my_json['classification'], "class_res": class_result}
             print(f"Classification result: {class_result}")
             return jsonify({"status": "post_success", "file_id": file_id, "classification": my_json['classification'], "confidence": my_json['confidence']})
         
@@ -61,14 +61,15 @@ def extract_info():
             file_path = file_data["path"]
             doc_type = file_data["type"]
             class_result = file_data["class_res"]
-            
+            file_name = file_data["name"]
+        
             langchain_res = langchain(file_path)
             print("Extracting info from " + file_path)
             print(langchain_res)
 
             json_res = llm(langchain_res, doc_type)
             print(f"server Answer: {json.dumps(json_res)}")
-            return json.dumps(json_res)
+            return jsonify({"file_name": file_name, "json": json_res})
 
         except Exception as e:
             print(f"Couldn't get answer: {e}")
