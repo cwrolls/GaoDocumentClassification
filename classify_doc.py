@@ -236,7 +236,7 @@ def llm(langchain_doc, doc_type):
     # User query we will use for the generation
     doc_type_id = doc_type
     print("doc_type_id: " + doc_type_id)
-    boilerplate = "You are a helpful AI assistant. Please output your answers to the questions as a JSON. Answer questions about different topics as separate fields (e.g. sender, receiver, bank). Put related information in the same field (e.g. multiple dollar amounts). Just put the answer and don't include anything additional."
+    boilerplate = "You are a helpful AI assistant. Please output your answers to the questions as a valid JSON file. Answer questions about different topics as separate keys (e.g. sender, receiver, bank). Put related information in the same key (e.g. multiple dollar amounts). Just output the JSON and don't include anything additional."
     if doc_type_id == "cash_flows":
         user_query = boilerplate + "What is the most recent date of this cash flow document?"
     elif doc_type_id == "emails":
@@ -278,7 +278,7 @@ def llm(langchain_doc, doc_type):
     # print(docs)
 
     print(f"Question: {user_query}")
-    print("Answer:")
+    print("classify_doc Answer:")
     print(answer.page_content)
     # print(answer.metadata["citations"])
     return answer.page_content

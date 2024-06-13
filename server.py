@@ -61,16 +61,13 @@ def extract_info():
             file_path = file_data["path"]
             doc_type = file_data["type"]
             class_result = file_data["class_res"]
-
             
             langchain_res = langchain(file_path)
             print("Extracting info from " + file_path)
             print(langchain_res)
 
-            my_json = json.loads(class_result)
-
             json_res = llm(langchain_res, doc_type)
-            print(f"Answer: {json.dumps(json_res)}")
+            print(f"server Answer: {json.dumps(json_res)}")
             return json.dumps(json_res)
 
         except Exception as e:
@@ -83,7 +80,7 @@ def extract_info():
         my_json = json.loads(class_result)
 
         json_res = llm(langchain_res, my_json['classification'])
-        print(f"Answer: {json.dumps(json_res)}")
+        print(f"server Answer: {json.dumps(json_res)}")
         return json.dumps(json_res)
 
 

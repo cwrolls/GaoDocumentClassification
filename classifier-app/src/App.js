@@ -9,6 +9,7 @@ import { Button } from 'primereact/button';
 import classNames from 'classnames';
 import { Tag } from 'primereact/tag';
 import JSONPretty from 'react-json-pretty';
+import JSONToTable from './components/JSONToTable';
 import CircularProgress from "@mui/material/CircularProgress";
 import ClearOutlinedIcon from '@mui/icons-material/ClearOutlined';
 import axios from 'axios';
@@ -103,12 +104,19 @@ function App() {
 
       try {
         let result = await axios.get(`http://127.0.0.1:8000/api/info?file_id=${file_id}`);
-        let json_str = '"{'+JSON.stringify(result.data).substring(13, JSON.stringify(result.data).length - 9)+'\\n}"'
-        console.log(json_str)
+        console.log("result.data: ", result.data)
+        let json_str = "{"+(result.data).substring(11, (result.data).length - 6)+"}";
+        // var no_slashes = json_str.replace(/\\/g, "");
+        // var no_n = no_slashes.replace(/n/g, '')
+        // console.log(no_n)
+        console.log("json_str: ", json_str)
+        console.log("parsed json:")
+        let parsedJson = JSON.parse(json_str)
+        console.log(parsedJson)
 
         const updatedFileInfo = {
           ...updatedFileData,
-          info: JSON.parse(json_str),
+          info: parsedJson,
           infoLoading: false,
         };
         
@@ -230,10 +238,10 @@ function App() {
                 <p className="dm-sans-body flex justify-center"><span className="code">{file.name}</span></p>
               </div>
               <div className='mt-2 mb-2 flex justify-center align-top'>
-                {file.infoLoading ? (
+                {(file.infoLoading || !file.info) ? (
                   <CircularProgress className="mt-8" color="inherit" size={20} thickness={6} />
                 ) : (
-                  <JSONPretty
+                 /*  <JSONPretty
                     id="json-pretty"
                     booleanStyle="color: #000000;"
                     stringStyle="color: #000000;"
@@ -241,7 +249,8 @@ function App() {
                     mainStyle="background-color: #FFFFFF; color: #FFFFFF; font-size: 0.9em; font-family: 'DM Mono', monospace; font-weight: 500; font-style: normal;"
                     keyStyle="background-color: #E6E6E6; padding: 3px 10px 3px 10px; width: auto; border-radius: 8px; line-height: 250%; color: rgb(94, 129, 172);"
                     data={file.info}
-                  />
+                  /> */
+                  <JSONToTable data={[file.info]}></JSONToTable>
                 )}
               </div>
             </div>
