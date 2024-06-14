@@ -23,3 +23,7 @@ table {
   td, th { 
     padding: 0.4em; 
   }
+
+.p-checkbox{
+  background-color: #0000; 
+}

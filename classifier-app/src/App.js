@@ -6,6 +6,7 @@ import 'primereact/resources/themes/mira/theme.css';
 import { FileUpload } from 'primereact/fileupload';
 import { ProgressBar } from 'primereact/progressbar';
 import { Button } from 'primereact/button';
+import { Checkbox } from 'primereact/checkbox';
 import classNames from 'classnames';
 import { Tag } from 'primereact/tag';
 import JSONToTable from './components/JSONToTable';
@@ -17,6 +18,7 @@ import './App.css';
 
 function App() {
   const [files, setFiles] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   const firstRender = useFirstRender();
   const uploadRef = useRef(null);
@@ -124,6 +126,17 @@ function App() {
       console.warn('Error uploading file:', error);
       alert('Error uploading file');
     }
+  };
+
+  const handleCheckboxChange = (file) => {
+    console.log("selected files: ", selectedFiles);
+    setSelectedFiles(prevSelectedFiles => {
+      if (prevSelectedFiles.includes(file)) {
+        return prevSelectedFiles.filter(selectedFile => selectedFile !== file);
+      } else {
+        return [...prevSelectedFiles, file];
+      }
+    });
   };
 
   const itemTemplate = (file, props) => {
@@ -239,25 +252,16 @@ function App() {
           <h1 className="text-xl">Information Extraction</h1>
         </div>
         {Object.entries(groupedFiles).map(([docType, files]) => (
-          <div key={docType} className="flex flex-col items-center mt-4">
+          <div key={docType} className="flex flex-col items-center mt-4 mb-10">
             <h1 className="text-x mb-2 dm-sans-heading">{docType}</h1>
-            <JSONToTable data={files.map(file => file.info)} />
+            {files.some(file => file.infoLoading || !file.info) ? (
+              <CircularProgress className="mt-8" color="inherit" size={20} thickness={6} />
+            ) : (
+              <JSONToTable data={files.map(file => file.info)} selectedFiles={selectedFiles}
+              handleCheckboxChange={handleCheckboxChange}/>
+            )}
           </div>
         ))}
-       {/*  {files.map((file) => (
-            <div key={file.id} className="grid-cols-2 gap-8 flex justify-center">
-              <div className="align-top mt-8">
-                <p className="dm-sans-body flex justify-center"><span className="code">{file.name}</span></p>
-              </div>
-              <div className='mt-2 mb-2 flex justify-center align-top'>
-                {(file.infoLoading || !file.info) ? (
-                  <CircularProgress className="mt-8" color="inherit" size={20} thickness={6} />
-                ) : (
-                  <JSONToTable data={files.map(file => file.info)}></JSONToTable>
-                )}
-              </div>
-            </div>
-          ))} */}
         </header>
       </div>
     </PrimeReactProvider>
