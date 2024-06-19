@@ -1,0 +1,53 @@
+.sign-in-button {
+    position: relative;
+    display:block;
+    height: 80px;
+    width: 180px;
+    margin: 10px 7px;
+    padding: 5px 5px;
+  
+    font-family: "DM Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 17px;
+  
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  
+    color: #EA4335;
+    border: 2px #EA4335 solid;
+    border-radius: 4px;
+    outline: 0;
+    overflow: hidden;
+    background: none;
+    z-index: 1;
+    cursor: pointer;
+    transition:         0.15s ease-in;
+    -o-transition:      0.15s ease-in;
+    -ms-transition:     0.15s ease-in;
+    -moz-transition:    0.15s ease-in;
+    -webkit-transition: 0.15s ease-in;
+  }
+  
+  .fill-s:hover {
+    color: whitesmoke;
+  }
+  
+  .fill-s:before {
+    content: "";
+    position: absolute;
+    background: #EA4335;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: -1;
+    -webkit-transition: top 0.13s ease-in;
+    transition: top 0.13s ease-in;
+  }
+  
+  .fill-s:hover:before {
+    top: 0;
+  }

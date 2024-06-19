@@ -1,27 +1,35 @@
 import logo from './logo.png';
 import pdfLogo from './pdf_logo.png';
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { PrimeReactProvider } from 'primereact/api';
 import 'primereact/resources/themes/mira/theme.css';
 import { FileUpload } from 'primereact/fileupload';
 import { ProgressBar } from 'primereact/progressbar';
 import { Button } from 'primereact/button';
-import { Checkbox } from 'primereact/checkbox';
 import classNames from 'classnames';
 import { Tag } from 'primereact/tag';
 import JSONToTable from './components/JSONToTable';
 import CircularProgress from "@mui/material/CircularProgress";
 import ClearOutlinedIcon from '@mui/icons-material/ClearOutlined';
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
+import IconButton from '@mui/material/IconButton';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
+import { onAuthStateChanged, getRedirectResult } from "firebase/auth";
+import { auth } from "./firebase";
+import SignIn from './components/SignIn';
 import './App.css';
 
 function App() {
+  const [user, setUser] = useState(null);
   const [files, setFiles] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [showPreviews, setShowPreviews] = useState(false);
 
   const firstRender = useFirstRender();
   const uploadRef = useRef(null);
+  const panelRef = useRef(null);
 
   const clearFiles = () => {
     uploadRef.current.clear()
@@ -47,6 +55,31 @@ function App() {
     ref.current = false;
     return firstRender;
   }
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user);
+      } else {
+        setUser(null);
+      }
+    });
+
+    // Check for redirect result
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result.user) {
+          setUser(result.user);
+          console.log("User: ", result.user);
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        // console.log("Error user email : ", error.customData.email);
+      });
+
+    return () => unsubscribe();
+  }, []);
 
   const documentUploadHandler = ({files}) => {
     const newFiles = Array.from(files).map(file => ({
@@ -139,6 +172,24 @@ function App() {
     });
   };
 
+  function delay(time) {
+    return new Promise(resolve => setTimeout(resolve, time));
+  }
+
+  const handleShowPreviews = () => {
+    setShowPreviews(true);
+  };
+
+  const handleClosePreviews = () => {
+    const panel = panelRef.current;
+    setShowPreviews(false);
+    if (panel.offsetWidth < 500) {
+      delay(600).then(() => panel.style.width = '500px');
+    } else {
+      panel.style.width = '500px'
+    }
+  };
+
   const itemTemplate = (file, props) => {
     var display_image;
 
@@ -161,6 +212,26 @@ function App() {
         </div>
     )
   }
+
+  const handleMouseDown = (e) => {
+    const panel = panelRef.current;
+    const startX = e.clientX;
+    const minWidth = 350;
+    const startWidth = panel.offsetWidth;
+  
+    const onMouseMove = (e) => {
+      const newWidth = Math.max(minWidth, startWidth - (e.clientX - startX));
+      panel.style.width = `${newWidth}px`;
+    };
+  
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+  
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
   
   const groupFilesByDocType = (files) => {
     return files.reduce((acc, file) => {
@@ -174,13 +245,24 @@ function App() {
   };
 
   const groupedFiles = groupFilesByDocType(files);
+  const allFilesLoaded = files.every(file => !file.classLoading && !file.infoLoading);
 
   return (
     <PrimeReactProvider>
     <div>
       <header className="Gao Document Classification">
-        <div className="flex justify-center mt-5">
-          <img src={logo} className="app-logo" alt="logo" />
+        <div className='mx-2 grid grid-cols-[1fr_max-content_1fr] p-2'>
+          <div className="col-start-2">
+            <img src={logo} className="app-logo" alt="logo" />
+          </div>
+          {user ? (
+            <div className="flex flex-col mt-8 mr-10 justify-self-end">
+              <h1 className='dm-sans-heading text-l flex justify-center'>Welcome, {user.displayName}</h1>
+              <Button label="Sign Out" onClick={() => auth.signOut()} className="sign-out-button fill"/>
+            </div>
+          ) : (
+            <SignIn />
+          )}
         </div>
         <div className="flex justify-center dm-sans-title mt-12">
           <h1 className="text-3xl">Document Classifier</h1>
@@ -210,13 +292,13 @@ function App() {
           pt = {{
             content: { className: firstRender ? ('justify-center relative items-center bg-slate-100') : ('justify-center relative bg-slate-100') },
             file: { className: classNames('flex items-center flex-wrap w-72 h-28', 'border border-gray-300 border-2 rounded gap-2 gap-x-2 mb-2 mr-2')},
-            chooseButton: { className: 'choose-button fill flex items-center'},
+            chooseButton: { className: 'choose-button fill2 flex items-center'},
             chooseIcon: { className: 'ml-3'},
           }}
           />
         </div>
         <div className='flex justify-center mt-4'>
-            <Button label="Clear" raised icon={(options) => <ClearOutlinedIcon {...options.iconProps} />} className='clear-button'
+            <Button label="Clear" icon={(options) => <ClearOutlinedIcon {...options.iconProps} />} className='clear-button fill'
             onClick={clearFiles}
             pt={{
               icon: {className: 'ml-2'},
@@ -251,6 +333,12 @@ function App() {
         <div className="flex justify-center dm-sans-heading mt-10 mb-4">
           <h1 className="text-xl">Information Extraction</h1>
         </div>
+        <div>
+          <p className="flex justify-center dm-sans-body mt-3">Information is grouped by document type.</p>
+        </div>
+        <div>
+          <p className="flex justify-center dm-sans-body mt-3 mb-4">Click the checkboxes next to the file names to preview those files.</p>
+        </div>
         {Object.entries(groupedFiles).map(([docType, files]) => (
           <div key={docType} className="flex flex-col items-center mt-4 mb-10">
             <h1 className="text-x mb-2 dm-sans-heading">{docType}</h1>
@@ -262,7 +350,43 @@ function App() {
             )}
           </div>
         ))}
-        </header>
+        
+        {allFilesLoaded && (
+          <div className="flex justify-center mt-4 mb-8">
+            <Button label="Show Previews" icon={(options) => <ArticleOutlinedIcon {...options.iconProps} />} className='show-previews-button fill3'
+              onClick={handleShowPreviews}
+            />
+          </div>
+        )}
+
+        <div ref={panelRef} className={`sliding-panel ${showPreviews ? 'open' : ''}`}>
+        <div className="resizer" onMouseDown={handleMouseDown}></div>
+          <div className="inline-block w-10">
+            <IconButton aria-label="delete" size="large" onClick={handleClosePreviews}>
+              <CloseOutlinedIcon fontSize="small" />
+            </IconButton>
+          </div>
+          <div className="flex flex-col items-center mb-10 h-max">
+            <h1 className="dm-sans-heading text-xl">File Previews</h1>
+            {selectedFiles.map((fileName, index) => {
+              const file = files.find(f => f.name === fileName);
+              if (file) {
+                return (
+                  <div key={index} className="file-preview">
+                    <h2 className = "flex justify-center dm-sans-heading mb-4">{fileName}</h2>
+                    {file.file.type === "application/pdf" ? (
+                      <object data={URL.createObjectURL(file.file)} type="application/pdf" width="100%" minHeight="500px"/>
+                    ) : (
+                      <img src={URL.createObjectURL(file.file)} alt={fileName} style={{ maxWidth: '800px', maxHeight: '800px'}} />
+                    )}
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+        </div>
+      </header>
       </div>
     </PrimeReactProvider>
   );
