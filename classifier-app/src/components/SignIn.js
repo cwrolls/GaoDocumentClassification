@@ -1,6 +1,6 @@
 // src/SignIn.js
 import React from 'react';
-import { signInWithRedirect } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { auth, provider } from "../firebase";
 import { Button } from 'primereact/button';
 import GoogleIcon from '@mui/icons-material/Google';
@@ -8,7 +8,7 @@ import './SignIn.css';
 
 const SignIn = () => {
   const signInWithGoogle = () => {
-    signInWithRedirect(auth, provider);
+    signInWithPopup(auth, provider);
   };
 
   return (

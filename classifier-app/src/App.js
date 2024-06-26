@@ -56,27 +56,24 @@ function App() {
     return firstRender;
   }
 
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      user.getIdToken().then(idToken => {
+        // Store the ID token and include it in requests to the server
+        localStorage.setItem('idToken', idToken);
+      });
+    }
+  });
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
+        console.log("User: ", user)
       } else {
         setUser(null);
       }
     });
-
-    // Check for redirect result
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result.user) {
-          setUser(result.user);
-          console.log("User: ", result.user);
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        // console.log("Error user email : ", error.customData.email);
-      });
 
     return () => unsubscribe();
   }, []);
@@ -99,6 +96,7 @@ function App() {
 
   const uploadDoc = async (document) => {
     const { id, file } = document;
+    const userID = localStorage.getItem('idToken');
    
     let formData = new FormData();
     formData.append('document', file);
@@ -107,7 +105,8 @@ function App() {
 
       let response = await axios.post('http://127.0.0.1:8000/api/upload', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${userID}`
         }
       });
       const { file_id } = response.data;

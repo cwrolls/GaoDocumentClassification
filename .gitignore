@@ -165,4 +165,6 @@ cython_debug/
 #.idea/
 .DS_Store
 
-client_secret.json
+credentials.json
+old_credentials.json
+credentials_firebase.json

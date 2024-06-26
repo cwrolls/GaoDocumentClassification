@@ -3,13 +3,13 @@ from flask_cors import CORS, cross_origin
 from werkzeug.utils import secure_filename
 from uuid import uuid4
 from classify_doc import *
-import requests, magic
+from drive import *
+import magic
 
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 
-import google.auth
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
@@ -18,6 +18,7 @@ from googleapiclient.http import MediaFileUpload
 app = Flask(__name__)
 CORS(app, origins="*", supports_credentials=True)
 
+# temporary local storage before uploading to drive
 UPLOAD_FOLDER = '/Users/claire/Downloads/Gao/DocumentClassification/GaoDocumentClassification/UploadedFiles'
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 
@@ -26,67 +27,23 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 file_map = {}
 
-@app.route('/authorize')
-def authorize():
-    flow = Flow.from_client_secrets_file(
-        'client_secret.json',
-        scopes=['https://www.googleapis.com/auth/drive'])
-    flow.redirect_uri = 'http://127.0.0.1:8000'
-    authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true')
-    return redirect(authorization_url)
-
-@app.route('/oauth2callback')
-def oauth2callback():
-    state = session['state']
-    flow = Flow.from_client_secrets_file(
-        'client_secret.json',
-        scopes=['https://www.googleapis.com/auth/drive'],
-        state=state,
-        redirect_uri=url_for('oauth2callback', _external=True))
-    flow.fetch_token(authorization_response=request.url)
-    credentials = flow.credentials
-    session['credentials'] = {
-        'token': credentials.token,
-        'refresh_token': credentials.refresh_token,
-        'token_uri': credentials.token_uri,
-        'client_id': credentials.client_id,
-        'client_secret': credentials.client_secret,
-        'scopes': credentials.scopes
-    }
-    return redirect(url_for('/api/upload'))
-
 @app.route('/api/upload', methods=['POST', 'GET'])
 @cross_origin(supports_credentials=True)
 def upload_file():
     if request.method == 'POST':
         try:
+            id_token_str = request.headers.get('Authorization').split('Bearer ')[1]
+            credentials = get_google_oauth_credentials(id_token_str)
             file = request.files['document']
             print(f"Uploading document {file.filename}")
             file_id = str(uuid4())
             filename = secure_filename(file.filename)
-            # file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            # print("file_path from upload: " + file_path)
-            # file.save(file_path)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            print("file_path from upload: " + file_path)
+            file.save(file_path)
 
-            creds, _ = google.auth.default()
-            service = build("drive", "v3", credentials=creds)
-
-            file_metadata = {"name": file.filename}
-            file_type = magic.from_buffer(file.read(2048))
-            media = MediaFileUpload(file.filename, mimetype=file_type)
-
-            file_to_upload = (
-                service.files()
-                .create(body=file_metadata, media_body=media, fields="id")
-                .execute()
-            )
-            print(f'File ID: {file_to_upload.get("id")}')
-
-            results = service.files().list(pageSize=1000, fields="nextPageToken, files(id, name, mimeType, size, modifiedTime)", q='name contains "de"').execute()
-            # get the results 
-            items = results.get('files', [])
+            drive_file_id = upload_to_drive(file_path, filename, credentials)
+            print(f"File uploaded to Google Drive with ID: {drive_file_id}")
 
             class_result = classify_document("model6", file_path)
             my_json = json.loads(class_result)
