@@ -139,6 +139,59 @@ function App() {
     form.submit();
   }
 
+  const getOrCreateFolder = async (accessToken) => {
+    const folderName = 'Gao Document Classification Files';
+
+    try {
+      const searchResponse = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (searchResponse.ok) {
+        const searchResult = await searchResponse.json();
+        if (searchResult.files && searchResult.files.length > 0) {
+          return searchResult.files[0].id;
+        } else {
+          const createResponse = await fetch(
+            'https://www.googleapis.com/drive/v3/files',
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                name: folderName,
+                mimeType: 'application/vnd.google-apps.folder',
+              }),
+            }
+          );
+
+          if (createResponse.ok) {
+            const createResult = await createResponse.json();
+            return createResult.id;
+          } else {
+            console.error('Error creating folder:', createResponse.statusText);
+            return null;
+          }
+        }
+      } else {
+        console.error('Error searching for folder:', searchResponse.statusText);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error searching or creating folder:', error);
+      return null;
+    }
+  };
+
+
   const documentUploadHandler = ({files}) => {
     const newFiles = Array.from(files).map(file => ({
       id: uuidv4(),
@@ -162,12 +215,20 @@ function App() {
     const metadata = {
       name: file.name,
       mimeType: file.docType,
-      parents: 
     };
 
     const params = JSON.parse(localStorage.getItem('oauth2-test-params'));
     if (params && params['access_token']) {
       const accessToken = params['access_token'];
+
+      const folderId = await getOrCreateFolder(accessToken);
+
+      if (!folderId) {
+        console.error('Failed to get or create folder');
+        return;
+      }
+
+      metadata.parents = [folderId]; // Set the parent folder ID
 
       const form = new FormData();
       form.append(
