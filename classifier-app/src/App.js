@@ -36,34 +36,12 @@ function App() {
     setFiles([]);
   }
 
-
-/*
-  useEffect(() => {
-    axios.get('http://127.0.0.1:8000')
-    .then(response => {
-      setData(response.data);
-    })
-    .catch(error => {
-      console.error('Error fetching data:', error);
-    });
-  }, []);
-  */
-
   function useFirstRender() {
     const ref = useRef(true);
     const firstRender = ref.current;
     ref.current = false;
     return firstRender;
   }
-
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      user.getIdToken().then(idToken => {
-        // Store the ID token and include it in requests to the server
-        localStorage.setItem('idToken', idToken);
-      });
-    }
-  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -77,6 +55,89 @@ function App() {
 
     return () => unsubscribe();
   }, []);
+
+  const CLIENT_ID = `651980250715-rljbofutivj2erurrledrt88hafe643f.apps.googleusercontent.com`;
+  const REDIRECT_URI = `http://127.0.0.1:3000`;
+
+  // Parse query string to see if page request is coming from OAuth 2.0 server.
+  const parseOAuthParams = () => {
+    var fragmentString = window.location.hash.substring(1);
+    var params = {};
+    var regex = /([^&=]+)=([^&]*)/g, m;
+    while (m = regex.exec(fragmentString)) {
+      params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+    }
+    if (Object.keys(params).length > 0 && params['state']) {
+      console.log("params state: ", params['state'])
+      console.log("local storage state: ", localStorage.getItem('state'))
+      if (params['state'] == localStorage.getItem('state')) {
+        localStorage.setItem('oauth2-test-params', JSON.stringify(params));
+        window.location.hash = ''; // Clear the URL fragment
+      } else {
+        console.log('State mismatch. Possible CSRF attack');
+      }
+    }
+  }
+
+  useEffect(() => {
+    parseOAuthParams();
+  }, []);
+
+  // Function to generate a random state value
+  function generateCryptoRandomState() {
+    const randomValues = new Uint32Array(2);
+    window.crypto.getRandomValues(randomValues);
+
+    // Encode as UTF-8
+    const utf8Encoder = new TextEncoder();
+    const utf8Array = utf8Encoder.encode(
+      String.fromCharCode.apply(null, randomValues)
+    );
+
+    // Base64 encode the UTF-8 data
+    return btoa(String.fromCharCode.apply(null, utf8Array))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  }
+
+  /*
+   * Create form to request access token from Google's OAuth 2.0 server.
+   */
+  function oauth2SignIn() {
+    // create random state value and store in local storage
+    var state = generateCryptoRandomState();
+    localStorage.setItem('state', state);
+
+    // Google's OAuth 2.0 endpoint for requesting an access token
+    var oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
+
+    // Create element to open OAuth 2.0 endpoint in new window.
+    var form = document.createElement('form');
+    form.setAttribute('method', 'GET'); // Send as a GET request.
+    form.setAttribute('action', oauth2Endpoint);
+
+    // Parameters to pass to OAuth 2.0 endpoint.
+    var params = {'client_id': CLIENT_ID,
+                  'redirect_uri': REDIRECT_URI,
+                  'scope': 'https://www.googleapis.com/auth/drive.file',
+                  'state': state,
+                  'include_granted_scopes': 'true',
+                  'response_type': 'token'};
+
+    // Add form parameters as hidden input values.
+    for (var p in params) {
+      var input = document.createElement('input');
+      input.setAttribute('type', 'hidden');
+      input.setAttribute('name', p);
+      input.setAttribute('value', params[p]);
+      form.appendChild(input);
+    }
+
+    // Add form to page and submit it to open the OAuth 2.0 endpoint.
+    document.body.appendChild(form);
+    form.submit();
+  }
 
   const documentUploadHandler = ({files}) => {
     const newFiles = Array.from(files).map(file => ({
@@ -97,11 +158,53 @@ function App() {
   const uploadDoc = async (document) => {
     const { id, file } = document;
     const userID = localStorage.getItem('idToken');
-   
-    let formData = new FormData();
-    formData.append('document', file);
 
-    try {
+    const metadata = {
+      name: file.name,
+      mimeType: file.docType,
+      parents: 
+    };
+
+    const params = JSON.parse(localStorage.getItem('oauth2-test-params'));
+    if (params && params['access_token']) {
+      const accessToken = params['access_token'];
+
+      const form = new FormData();
+      form.append(
+        'metadata',
+        new Blob([JSON.stringify(metadata)], { type: 'application/json' })
+      );
+      form.append('file', file);
+
+      try {
+        const response = await fetch(
+          'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: form,
+          }
+        );
+
+        if (response.ok) {
+          const jsonResponse = await response.json();
+          console.log('File uploaded successfully:', jsonResponse);
+        } else {
+          console.error('Error uploading file:', response.statusText);
+          if (response.status === 401) {
+            oauth2SignIn();
+          }
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+    } else {
+      oauth2SignIn();
+    }
+
+    /* try {
 
       let response = await axios.post('http://127.0.0.1:8000/api/upload', formData, {
         headers: {
@@ -157,7 +260,7 @@ function App() {
       setFiles(prevFiles => prevFiles.map(file => file.id === id ? { ...file, classLoading: false } : file));
       console.warn('Error uploading file:', error);
       alert('Error uploading file');
-    }
+    } */
   };
 
   const handleCheckboxChange = (file) => {
