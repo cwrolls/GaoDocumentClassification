@@ -183,10 +183,36 @@ function App() {
         }
       } else {
         console.error('Error searching for folder:', searchResponse.statusText);
+        oauth2SignIn();
         return null;
       }
     } catch (error) {
       console.error('Error searching or creating folder:', error);
+      return null;
+    }
+  };
+
+  const retrieveFileContent = async (fileId, accessToken) => {
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const fileContent = await response.blob();
+        return fileContent;
+      } else {
+        console.error('Error retrieving file:', response.statusText);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error retrieving file:', error);
       return null;
     }
   };
@@ -252,6 +278,86 @@ function App() {
         if (response.ok) {
           const jsonResponse = await response.json();
           console.log('File uploaded successfully:', jsonResponse);
+          const fileId = jsonResponse.id;
+          // const fileContent = await retrieveFileContent(fileId, accessToken);
+          
+          try {
+            const response = await axios.post('http://127.0.0.1:8000/api/upload', {
+              file_id: fileId,
+              access_token: accessToken
+            });
+            if (response.status === 200) {
+              console.log('Classification result:', response.data);
+            } else {
+              console.error('Error calling backend:', response.statusText);
+            }
+
+            const updatedFileData = {
+              ...document,
+              docType: response.data.classification,
+              confidence: response.data.confidence,
+              classLoading: false,
+              infoLoading: true,
+            };
+            setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileData : file));
+            console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence);
+          
+          /* try {
+            let response = await axios.post('http://127.0.0.1:8000/api/upload', fileContent, {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${userID}`
+              }
+            });
+            const { file_id } = response.data;
+      
+            const updatedFileData = {
+              ...document,
+              docType: response.data.classification,
+              confidence: response.data.confidence,
+              classLoading: false,
+              infoLoading: true,
+            };
+            setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileData : file));
+            console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence);
+             */
+            try {
+              let result = await axios.get(`http://127.0.0.1:8000/api/info?file_id=${fileId}`);
+              console.log("result.data: ", result.data);
+              let name = result.data.file_name;
+              let json_str = "{"+((result.data)['json']).substring(11, ((result.data)['json']).length - 6)+"}";
+              console.log("json_str:");
+              console.log(json_str)
+      
+              let file_name_json = {"file_name": name};
+              console.log("file_name_json:");
+              console.log(file_name_json);
+      
+              let parsedJson = JSON.parse(json_str);
+              console.log("parsed json:");
+              console.log(parsedJson);
+      
+              let total_json = Object.assign(file_name_json, parsedJson);
+              console.log("total json:")
+              console.log(total_json)
+              
+              const updatedFileInfo = {
+                ...updatedFileData,
+                info: total_json,
+                infoLoading: false,
+            };
+            setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileInfo : file));
+          } catch (error) { 
+            setFiles(prevFiles => prevFiles.map(file => file.id === id ? { ...file, infoLoading: false } : file));
+            console.warn('Error fetching info:', error);
+          }
+    
+          } catch (error) {
+            setFiles(prevFiles => prevFiles.map(file => file.id === id ? { ...file, classLoading: false } : file));
+            console.warn('Error uploading file:', error);
+            alert('Error uploading file');
+          }
+
         } else {
           console.error('Error uploading file:', response.statusText);
           if (response.status === 401) {
@@ -264,64 +370,6 @@ function App() {
     } else {
       oauth2SignIn();
     }
-
-    /* try {
-
-      let response = await axios.post('http://127.0.0.1:8000/api/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${userID}`
-        }
-      });
-      const { file_id } = response.data;
-
-      const updatedFileData = {
-        ...document,
-        docType: response.data.classification,
-        confidence: response.data.confidence,
-        classLoading: false,
-        infoLoading: true,
-      };
-      setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileData : file));
-      console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence);
-      
-      try {
-        let result = await axios.get(`http://127.0.0.1:8000/api/info?file_id=${file_id}`);
-        console.log("result.data: ", result.data);
-        let name = result.data.file_name;
-        let json_str = "{"+((result.data)['json']).substring(11, ((result.data)['json']).length - 6)+"}";
-        console.log("json_str:");
-        console.log(json_str)
-
-        let file_name_json = {"file_name": name};
-        console.log("file_name_json:");
-        console.log(file_name_json);
-
-        let parsedJson = JSON.parse(json_str);
-        console.log("parsed json:");
-        console.log(parsedJson);
-
-        let total_json = Object.assign(file_name_json, parsedJson);
-        console.log("total json:")
-        console.log(total_json)
-        
-        const updatedFileInfo = {
-          ...updatedFileData,
-          info: total_json,
-          infoLoading: false,
-        };
-        
-        setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileInfo : file));
-      } catch (error) { 
-        setFiles(prevFiles => prevFiles.map(file => file.id === id ? { ...file, infoLoading: false } : file));
-        console.warn('Error fetching info:', error);
-      }
-
-    } catch (error) {
-      setFiles(prevFiles => prevFiles.map(file => file.id === id ? { ...file, classLoading: false } : file));
-      console.warn('Error uploading file:', error);
-      alert('Error uploading file');
-    } */
   };
 
   const handleCheckboxChange = (file) => {

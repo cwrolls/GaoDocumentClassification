@@ -4,16 +4,9 @@ from werkzeug.utils import secure_filename
 from uuid import uuid4
 from classify_doc import *
 from drive import *
-import magic
-
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import Flow
-from google.auth.transport.requests import Request
-
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from googleapiclient.http import MediaFileUpload
-
+from google.oauth2.credentials import Credentials
 
 app = Flask(__name__)
 CORS(app, origins="*", supports_credentials=True)
@@ -27,23 +20,43 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 file_map = {}
 
+def get_drive_service(access_token):
+    credentials = Credentials(token=access_token)
+    return build('drive', 'v3', credentials=credentials)
+
+def download_file_from_google_drive(service, file_id, destination):
+    try:
+        request = service.files().get_media(fileId=file_id)
+        with open(destination, 'wb') as f:
+            downloader = MediaIoBaseDownload(f, request)
+            done = False
+            while done is False:
+                status, done = downloader.next_chunk()
+                print("Download %d%%." % int(status.progress() * 100))
+    except HttpError as error:
+        print(f"An error occurred: {error}")
+        return None
+    return destination
+
 @app.route('/api/upload', methods=['POST', 'GET'])
 @cross_origin(supports_credentials=True)
 def upload_file():
     if request.method == 'POST':
         try:
-            id_token_str = request.headers.get('Authorization').split('Bearer ')[1]
-            credentials = get_google_oauth_credentials(id_token_str)
-            file = request.files['document']
-            print(f"Uploading document {file.filename}")
-            file_id = str(uuid4())
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            print("file_path from upload: " + file_path)
-            file.save(file_path)
+            data = request.json
+            file_id = data['file_id']
+            access_token = data['access_token']
 
-            drive_file_id = upload_to_drive(file_path, filename, credentials)
-            print(f"File uploaded to Google Drive with ID: {drive_file_id}")
+            # Get Google Drive service
+            service = get_drive_service(access_token)
+
+            # Set destination path
+            filename = f"{file_id}.pdf"  # or any other suitable extension
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+            # Download file from Google Drive
+            download_file_from_google_drive(service, file_id, file_path)
+            print("File downloaded from Google Drive to: " + file_path)
 
             class_result = classify_document("model6", file_path)
             my_json = json.loads(class_result)
@@ -52,12 +65,13 @@ def upload_file():
             return jsonify({"status": "post_success", "file_id": file_id, "classification": my_json['classification'], "confidence": my_json['confidence']})
         
         except HttpError as error:
-            print(f"An error occurred uploading to Drive: {error}")
-            file = None
+            print(f"An error occurred downloading from Drive: {error}")
+            return jsonify({"status": "failed", "error": str(error)})
 
         except Exception as e:
-            print(f"Couldn't upload document: {e}")
+            print(f"Couldn't process document: {e}")
             return jsonify({"status": "failed", "error": str(e)})
+
     
     else:
         my_json = json.loads(class_result)
