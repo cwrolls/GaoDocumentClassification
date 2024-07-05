@@ -26,7 +26,7 @@ function App() {
   const [files, setFiles] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [showPreviews, setShowPreviews] = useState(false);
-
+  
   const firstRender = useFirstRender();
   const uploadRef = useRef(null);
   const panelRef = useRef(null);
@@ -101,6 +101,8 @@ function App() {
       .replace(/=+$/, '');
   }
 
+  // MARK: oauth2SignIn
+
   /*
    * Create form to request access token from Google's OAuth 2.0 server.
    */
@@ -138,6 +140,8 @@ function App() {
     document.body.appendChild(form);
     form.submit();
   }
+  
+  // MARK: getOrCreateFolder
 
   const getOrCreateFolder = async (accessToken) => {
     const folderName = 'Gao Document Classification Files';
@@ -192,31 +196,6 @@ function App() {
     }
   };
 
-  const retrieveFileContent = async (fileId, accessToken) => {
-    try {
-      const response = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const fileContent = await response.blob();
-        return fileContent;
-      } else {
-        console.error('Error retrieving file:', response.statusText);
-        return null;
-      }
-    } catch (error) {
-      console.error('Error retrieving file:', error);
-      return null;
-    }
-  };
-
 
   const documentUploadHandler = ({files}) => {
     const newFiles = Array.from(files).map(file => ({
@@ -234,9 +213,10 @@ function App() {
     setFiles(prevFiles => [...prevFiles, ...newFiles]);
   };
 
+  // MARK: uploadDoc
+
   const uploadDoc = async (document) => {
     const { id, file } = document;
-    const userID = localStorage.getItem('idToken');
 
     const metadata = {
       name: file.name,
@@ -263,6 +243,8 @@ function App() {
       );
       form.append('file', file);
 
+      // MARK: upload to drive
+
       try {
         const response = await fetch(
           'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
@@ -279,12 +261,15 @@ function App() {
           const jsonResponse = await response.json();
           console.log('File uploaded successfully:', jsonResponse);
           const fileId = jsonResponse.id;
-          // const fileContent = await retrieveFileContent(fileId, accessToken);
+          console.log("fileID: ", fileId)
           
+          // MARK: send to backend
+        
           try {
             const response = await axios.post('http://127.0.0.1:8000/api/upload', {
               file_id: fileId,
-              access_token: accessToken
+              access_token: accessToken,
+              name: file.name,
             });
             if (response.status === 200) {
               console.log('Classification result:', response.data);
@@ -294,13 +279,16 @@ function App() {
 
             const updatedFileData = {
               ...document,
+              file_id: fileId,
               docType: response.data.classification,
               confidence: response.data.confidence,
               classLoading: false,
               infoLoading: true,
             };
             setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileData : file));
+            console.log("File array: " + files)
             console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence);
+            console.log("File name: " + file.name);
           
           /* try {
             let response = await axios.post('http://127.0.0.1:8000/api/upload', fileContent, {
@@ -321,6 +309,9 @@ function App() {
             setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileData : file));
             console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence);
              */
+
+            // MARK: extract info
+
             try {
               let result = await axios.get(`http://127.0.0.1:8000/api/info?file_id=${fileId}`);
               console.log("result.data: ", result.data);
@@ -371,6 +362,8 @@ function App() {
       oauth2SignIn();
     }
   };
+
+  // MARK: Checkbox and previews
 
   const handleCheckboxChange = (file) => {
     console.log("selected files: ", selectedFiles);
@@ -458,6 +451,8 @@ function App() {
   const groupedFiles = groupFilesByDocType(files);
   const allFilesLoaded = files.every(file => !file.classLoading && !file.infoLoading);
 
+  // MARK: render
+
   return (
     <PrimeReactProvider>
     <div>
@@ -501,7 +496,7 @@ function App() {
           )}
           emptyTemplate={<p className="mt-[-7%]">Drag and drop files to here to upload.</p>} 
           pt = {{
-            content: { className: firstRender ? ('justify-center relative items-center bg-slate-100') : ('justify-center relative bg-slate-100') },
+            content: { className: firstRender ? ('justify-center relative items-center bg-slate-100') : ('justify-center relative items-center bg-slate-100') },
             file: { className: classNames('flex items-center flex-wrap w-72 h-28', 'border border-gray-300 border-2 rounded gap-2 gap-x-2 mb-2 mr-2')},
             chooseButton: { className: 'choose-button fill2 flex items-center'},
             chooseIcon: { className: 'ml-3'},
@@ -577,18 +572,19 @@ function App() {
               <CloseOutlinedIcon fontSize="small" />
             </IconButton>
           </div>
-          <div className="flex flex-col items-center mb-10 h-max">
-            <h1 className="dm-sans-heading text-xl">File Previews</h1>
+          <div className="flex flex-col items-center mb-10 h-screen">
+            <h1 className="dm-sans-heading text-xl mb-4">File Previews</h1>
             {selectedFiles.map((fileName, index) => {
               const file = files.find(f => f.name === fileName);
               if (file) {
+                const embedUrl = `https://drive.google.com/file/d/${file.file_id}/preview`;
                 return (
-                  <div key={index} className="file-preview">
+                  <div key={index} className="flex flex-col items-center w-full h-screen">
                     <h2 className = "flex justify-center dm-sans-heading mb-4">{fileName}</h2>
                     {file.file.type === "application/pdf" ? (
-                      <object data={URL.createObjectURL(file.file)} type="application/pdf" width="100%" minHeight="500px"/>
+                      <iframe src={embedUrl} width="90%" height="70%"></iframe>
                     ) : (
-                      <img src={URL.createObjectURL(file.file)} alt={fileName} style={{ maxWidth: '800px', maxHeight: '800px'}} />
+                      <iframe src={embedUrl} width="90%" height="70%"></iframe>
                     )}
                   </div>
                 );

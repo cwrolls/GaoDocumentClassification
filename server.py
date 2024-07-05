@@ -44,6 +44,7 @@ def upload_file():
     if request.method == 'POST':
         try:
             data = request.json
+            print(data)
             file_id = data['file_id']
             access_token = data['access_token']
 
@@ -51,7 +52,8 @@ def upload_file():
             service = get_drive_service(access_token)
 
             # Set destination path
-            filename = f"{file_id}.pdf"  # or any other suitable extension
+            filename = data['name']
+            print("file name: " + data['name'])
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
             # Download file from Google Drive
