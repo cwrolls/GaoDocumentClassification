@@ -479,7 +479,7 @@ function App() {
       display_image=<img alt={""} role="presentation" src={file.objectURL} width={40} />
     }
     return (
-        <div className="flex align-items-center flex-wrap grid-cols-3 gap-6 ">
+        <div className="flex items-center flex-wrap grid-cols-3 gap-6 ">
           <div className="flex align-items-center max-h-28">
             {display_image}
           </div>
@@ -572,7 +572,7 @@ function App() {
           )}
           emptyTemplate={<p className="mt-[-7%]">Drag and drop files to here to upload.</p>} 
           pt = {{
-            content: { className: firstRender ? ('justify-center relative items-center bg-slate-100') : ('justify-center relative items-center bg-slate-100') },
+            content: { className: files.length===0 ? ('justify-center relative items-center bg-slate-100') : ('justify-center relative bg-slate-100 mb-4') },
             file: { className: classNames('flex items-center flex-wrap w-72 h-28', 'border border-gray-300 border-2 rounded gap-2 gap-x-2 mb-2 mr-2')},
             chooseButton: { className: 'choose-button fill2 flex items-center'},
             chooseIcon: { className: 'ml-3'},
