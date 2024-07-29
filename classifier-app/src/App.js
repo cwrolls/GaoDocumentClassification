@@ -23,9 +23,12 @@ import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
   const [files, setFiles] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [showPreviews, setShowPreviews] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0); 
   
   const firstRender = useFirstRender();
   const uploadRef = useRef(null);
@@ -47,6 +50,7 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
+        setUserId(user.uid);
         console.log("User: ", user)
       } else {
         setUser(null);
@@ -125,7 +129,8 @@ function App() {
                   'scope': 'https://www.googleapis.com/auth/drive.file',
                   'state': state,
                   'include_granted_scopes': 'true',
-                  'response_type': 'token'};
+                  'response_type': 'code',
+                  'access_type': 'offline'} // Request offline access to receive a refresh token;
 
     // Add form parameters as hidden input values.
     for (var p in params) {
@@ -140,6 +145,91 @@ function App() {
     document.body.appendChild(form);
     form.submit();
   }
+
+  async function exchangeCodeForTokens(authCode) {
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        code: authCode,
+        client_id: CLIENT_ID,
+        client_secret: process.env.REACT_APP_CLIENT_SECRET,
+        redirect_uri: REDIRECT_URI,
+        grant_type: 'authorization_code',
+      }),
+    });
+  
+    const data = await response.json();
+    if (data.access_token && data.refresh_token) {
+      await fetch('/store-refresh-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh_token: data.refresh_token }),
+      });
+
+      localStorage.setItem('oauth2-test-params', JSON.stringify(data));
+      setAccessToken(data.access_token);
+    } else {
+      console.error('Failed to exchange authorization code for tokens:', data);
+    }
+  }
+
+  async function refreshAccessToken(userId) {
+    const response = await fetch(`/get-refresh-token/${userId}`);
+    const data = await response.json();
+  
+    if (data.refresh_token) {
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: CLIENT_ID,
+          client_secret: process.env.REACT_APP_CLIENT_SECRET,
+          refresh_token: data.refresh_token,
+          grant_type: 'refresh_token',
+        }),
+      });
+  
+      const tokenData = await tokenResponse.json();
+      console.log("tokenData: ", tokenData)
+      if (tokenData.access_token) {
+        localStorage.setItem('oauth2-test-params', JSON.stringify({
+          ...JSON.parse(localStorage.getItem('oauth2-test-params')),
+          access_token: tokenData.access_token
+        }));
+        setAccessToken(tokenData.access_token);
+      } else {
+        console.error('Failed to refresh access token:', tokenData);
+      }
+    } else {
+      console.error('Failed to retrieve refresh token:', data);
+    }
+  }
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const authCode = urlParams.get('code');
+    if (authCode) {
+      exchangeCodeForTokens(authCode);
+    }
+  }, []);
+
+  // Refresh access token every 55 minutes
+  useEffect(() => {
+    if (accessToken) {
+      const interval = setInterval(() => {
+        refreshAccessToken(userId);
+      }, 55 * 60 * 1000); // 55 minutes
+      return () => clearInterval(interval);
+    }
+  }, [accessToken, userId]);
+
   
   // MARK: getOrCreateFolder
 
@@ -253,6 +343,11 @@ function App() {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
+            onUploadProgress: (progressEvent) => {
+              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setUploadProgress(progress);
+              console.log("progress: ", progress)
+            },
             body: form,
           }
         );
@@ -289,26 +384,6 @@ function App() {
             console.log("File array: " + files)
             console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence);
             console.log("File name: " + file.name);
-          
-          /* try {
-            let response = await axios.post('http://127.0.0.1:8000/api/upload', fileContent, {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${userID}`
-              }
-            });
-            const { file_id } = response.data;
-      
-            const updatedFileData = {
-              ...document,
-              docType: response.data.classification,
-              confidence: response.data.confidence,
-              classLoading: false,
-              infoLoading: true,
-            };
-            setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileData : file));
-            console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence);
-             */
 
             // MARK: extract info
 
@@ -352,7 +427,8 @@ function App() {
         } else {
           console.error('Error uploading file:', response.statusText);
           if (response.status === 401) {
-            oauth2SignIn();
+            console.log("error with response.ok")
+            // oauth2SignIn();
           }
         }
       } catch (error) {
@@ -489,10 +565,10 @@ function App() {
           <FileUpload name="document" ref={uploadRef} customUpload multiple uploadHandler={documentUploadHandler} auto 
           url={'/api/upload'} accept="image/jpeg,image/png,application/pdf" maxFileSize={4000000} itemTemplate={itemTemplate}
           progressBarTemplate=
-          {(files.size > 0 && files[0].classLoading) ? (
-            <ProgressBar mode="indeterminate" style={{height: '4px'}}></ProgressBar>
+          {(files.size > 0) ? (
+            <ProgressBar value={uploadProgress} style={{height: '4px'}}></ProgressBar>
           ) : (
-            <ProgressBar mode="indeterminate" style={{height: '0px'}}></ProgressBar>
+            <ProgressBar value={uploadProgress} style={{height: '0px'}}></ProgressBar>
           )}
           emptyTemplate={<p className="mt-[-7%]">Drag and drop files to here to upload.</p>} 
           pt = {{
@@ -567,10 +643,12 @@ function App() {
 
         <div ref={panelRef} className={`sliding-panel ${showPreviews ? 'open' : ''}`}>
         <div className="resizer" onMouseDown={handleMouseDown}></div>
-          <div className="inline-block w-10">
-            <IconButton aria-label="delete" size="large" onClick={handleClosePreviews}>
-              <CloseOutlinedIcon fontSize="small" />
-            </IconButton>
+          <div className="sticky top-0 bg-white w-full z-10">
+            <div className="inline-block w-10">
+              <IconButton aria-label="delete" size="large" onClick={handleClosePreviews}>
+                <CloseOutlinedIcon fontSize="small" />
+              </IconButton>
+            </div>
           </div>
           <div className="flex flex-col items-center mb-10 h-screen">
             <h1 className="dm-sans-heading text-xl mb-4">File Previews</h1>
@@ -582,9 +660,9 @@ function App() {
                   <div key={index} className="flex flex-col items-center w-full h-screen">
                     <h2 className = "flex justify-center dm-sans-heading mb-4">{fileName}</h2>
                     {file.file.type === "application/pdf" ? (
-                      <iframe src={embedUrl} width="90%" height="70%"></iframe>
+                      <iframe src={embedUrl} width="90%" height="600" className="mb-8"></iframe>
                     ) : (
-                      <iframe src={embedUrl} width="90%" height="70%"></iframe>
+                      <iframe src={embedUrl} width="90%" height="600" className="mb-8"></iframe>
                     )}
                   </div>
                 );
