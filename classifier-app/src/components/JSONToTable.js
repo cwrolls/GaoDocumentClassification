@@ -29,7 +29,7 @@ function getCells(obj, selectedFiles, handleCheckboxChange) {
         <td key={cellIndex}>
           <Checkbox onChange={() => handleCheckboxChange(value)} 
           checked={selectedFiles.some(file_name => file_name === value)}></Checkbox>
-          <span className="ml-3">{value}</span>
+          <span className="ml-6 max-w-64">{value}</span>
         </td>
       );
     } else if (Array.isArray(value)) {

@@ -22,6 +22,8 @@ table {
   }
   td, th { 
     padding: 0.4em; 
+    word-wrap: break-word;
+    overflow-wrap: break-word; 
   }
 
 .p-checkbox{
