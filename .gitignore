@@ -168,3 +168,4 @@ cython_debug/
 credentials.json
 old_credentials.json
 credentials_firebase.json
+credentials/

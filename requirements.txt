@@ -1,6 +1,10 @@
 azure-storage-blob==12.9.0
 azure-storage-queue==12.1.5
 azure-storage-file==2.1.0
+azure-ai-ml==1.18.0
+azure-ai-documentintelligence==1.0.0
+python-dotenv==1.0.1
+python-libmagic==0.4.0
 firebase_admin==6.5.0
 Flask==3.0.3
 flask_cors==4.0.1
