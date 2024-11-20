@@ -1,4 +1,9 @@
 import logo from './logo.png';
+import caprae from './caprae.jpg';
+import azure from './tools_icons/azure.png';
+import cohere from './tools_icons/cohere.jpg';
+import langchain from './tools_icons/langchain.png';
+import react from './tools_icons/react.png';
 import pdfLogo from './pdf_logo.png';
 import React, { useState, useEffect, useRef } from "react";
 import { PrimeReactProvider } from 'primereact/api';
@@ -535,7 +540,7 @@ function App() {
       <header className="Gao Document Classification">
         <div className='mx-2 grid grid-cols-[1fr_max-content_1fr] p-2'>
           <div className="col-start-2">
-            <img src={logo} className="app-logo" alt="logo" />
+            <img src={caprae} className="app-logo" alt="logo" />
           </div>
           {user ? (
             <div className="flex flex-col mt-8 mr-10 justify-self-end">
@@ -550,16 +555,29 @@ function App() {
           <h1 className="text-3xl">Document Classifier</h1>
         </div>
         <div>
+          <p className="flex justify-center dm-sans-heading mt-3">built by Claire Wu</p>
           <p className="flex justify-center dm-sans-body mt-3">Powered by Azure Document Intelligence, LangChain, and Cohere.</p>
         </div>
         <div>
           <p className="flex justify-center dm-sans-body mt-1">Built with ReactJS, Flask, and Axios.</p>
+        </div>
+        <div>
+          <div className="flex justify-center mt-8">
+            <div className="grid grid-cols-4 gap-4 place-items-center">
+              <img src={azure} alt="Azure" className="h-14" />
+              <img src={cohere} alt="Cohere" className="h-14" />
+              <img src={langchain} alt="LangChain" className="h-14" />
+              <img src={react} alt="React" className="h-14" />
+            </div>
+          </div>
         </div>
         <div className="flex justify-center dm-sans-heading mt-12">
           <h1 className="text-xl">Upload a Document</h1>
         </div>
         <div>
           <p className="flex justify-center dm-sans-body mt-3">Please make sure that your file is a pdf, png, or jpeg. The maximimum file size is 4 MB.</p>
+          <p className="flex justify-center dm-sans-body mt-8">This tool currently supports the following classification types:</p>
+          <p className="flex justify-center dm-sans-body mt-1">text communication, remittances, letters, income statements, emailes, cheques, cash flows, board resolutions, bank statements, and balance sheets</p>
         </div>
         <div className = "flex justify-center">
           <FileUpload name="document" ref={uploadRef} customUpload multiple uploadHandler={documentUploadHandler} auto 

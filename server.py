@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify, redirect, session, url_for
 from flask_cors import CORS, cross_origin
-from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 from uuid import uuid4
 from classify_doc import *
@@ -12,15 +11,6 @@ from google.oauth2.credentials import Credentials
 app = Flask(__name__)
 CORS(app, origins="*", supports_credentials=True)
 basedir = os.path.abspath(os.path.dirname(__file__))
-
-# Database setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'tokens.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-db = SQLAlchemy(app)
-with app.app_context():
-        db.create_all()
-        print("Database initialized!")
 
 # temporary local storage before uploading to drive
 UPLOAD_FOLDER = '/Users/claire/Downloads/Gao/DocumentClassification/GaoDocumentClassification/UploadedFiles'
@@ -125,12 +115,6 @@ def extract_info():
         json_res = llm(langchain_res, my_json['classification'])
         print(f"server Answer: {json.dumps(json_res)}")
         return json.dumps(json_res)
-
-# Define a model for storing refresh tokens
-class RefreshToken(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), nullable=False)
-    token = db.Column(db.String(256), nullable=False)
 
 @app.route('/store-refresh-token', methods=['POST'])
 def store_refresh_token():
