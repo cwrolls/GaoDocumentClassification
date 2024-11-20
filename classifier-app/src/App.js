@@ -368,7 +368,7 @@ function App() {
           // MARK: send to backend
         
           try {
-            const response = await axios.post('http://127.0.0.1:8000/api/upload', {
+            const response = await axios.post('https://dry-cove-25181-323453527e12.herokuapp.com/api/upload', {
               file_id: fileId,
               access_token: accessToken,
               name: file.name,
@@ -395,7 +395,7 @@ function App() {
             // MARK: extract info
 
             try {
-              let result = await axios.get(`http://127.0.0.1:8000/api/info?file_id=${fileId}`);
+              let result = await axios.get(`https://dry-cove-25181-323453527e12.herokuapp.com/api/info?file_id=${fileId}`);
               console.log("result.data: ", result.data);
               let name = result.data.file_name;
               let json_str = "{"+((result.data)['json']).substring(11, ((result.data)['json']).length - 6)+"}";

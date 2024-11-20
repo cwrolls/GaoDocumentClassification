@@ -1,6 +1,7 @@
 {
   "name": "classifier-app",
   "version": "0.1.0",
+  "homepage": "https://cwrolls.github.io/GaoDocumentClassification",
   "private": true,
   "proxy": "http://127.0.0.1:8000",
   "dependencies": {
@@ -32,7 +33,9 @@
     "start": "react-scripts start env-cmd",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [

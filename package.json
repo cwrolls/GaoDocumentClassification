@@ -1,8 +1,11 @@
 {
     "cacheDirectories": [
-      "client/node_modules"
+        "client/node_modules"
     ],
     "scripts": {
-      "heroku-postbuild": "cd client && npm install && npm run build"
+        "heroku-postbuild": "cd client && npm install && npm run build"
+    },
+    "devDependencies": {
+        "gh-pages": "^6.2.0"
     }
 }
