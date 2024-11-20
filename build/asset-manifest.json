@@ -1,0 +1,30 @@
+{
+  "files": {
+    "main.css": "/static/css/main.06a53f16.css",
+    "main.js": "/static/js/main.eeb14215.js",
+    "static/js/453.96c21f8b.chunk.js": "/static/js/453.96c21f8b.chunk.js",
+    "static/media/Inter-SemiBold.woff": "/static/media/Inter-SemiBold.ff53c7406a23717b16a8.woff",
+    "static/media/Inter-Regular.woff": "/static/media/Inter-Regular.bafbd62f86d686bb65d0.woff",
+    "static/media/Inter-Bold.woff": "/static/media/Inter-Bold.b755d2e570b1329b527d.woff",
+    "static/media/Inter-Medium.woff": "/static/media/Inter-Medium.19051ee52164b5e67119.woff",
+    "static/media/Inter-SemiBold.woff2": "/static/media/Inter-SemiBold.57fcd36069589ac94692.woff2",
+    "static/media/Inter-Regular.woff2": "/static/media/Inter-Regular.1619ff46967e77779ac6.woff2",
+    "static/media/Inter-Bold.woff2": "/static/media/Inter-Bold.36a650f426faae9edc53.woff2",
+    "static/media/Inter-Medium.woff2": "/static/media/Inter-Medium.d5afc4bd2dfa4a0c724a.woff2",
+    "static/media/pdf_logo.png": "/static/media/pdf_logo.c7638de80fbeb947094c.png",
+    "static/media/logo.png": "/static/media/logo.eeb549b94d6ddd9f94f7.png",
+    "static/media/caprae.jpg": "/static/media/caprae.84b63b0db3151d362b68.jpg",
+    "static/media/azure.png": "/static/media/azure.0c78065b1add1641d833.png",
+    "static/media/langchain.png": "/static/media/langchain.5fce0c26d4344c5b9838.png",
+    "static/media/react.png": "/static/media/react.1e8aaa115f1621ae3ce0.png",
+    "static/media/cohere.jpg": "/static/media/cohere.8d1e6b762a9115c0e107.jpg",
+    "index.html": "/index.html",
+    "main.06a53f16.css.map": "/static/css/main.06a53f16.css.map",
+    "main.eeb14215.js.map": "/static/js/main.eeb14215.js.map",
+    "453.96c21f8b.chunk.js.map": "/static/js/453.96c21f8b.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.06a53f16.css",
+    "static/js/main.eeb14215.js"
+  ]
+}

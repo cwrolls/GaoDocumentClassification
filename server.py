@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect, session, url_for
+from flask import Flask, request, jsonify, redirect, send_from_directory, session, url_for
 from flask_cors import CORS, cross_origin
 from werkzeug.utils import secure_filename
 from uuid import uuid4
@@ -8,7 +8,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.credentials import Credentials
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='build', static_url_path='/')
 CORS(app, origins="*", supports_credentials=True)
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -38,6 +38,14 @@ def download_file_from_google_drive(service, file_id, destination):
         print(f"An error occurred: {error}")
         return None
     return destination
+
+@app.route('/')
+def home():
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/static/<path:path>')
+def static_files(path):
+    return send_from_directory(app.static_folder, path)
 
 @app.route('/api/upload', methods=['POST', 'GET'])
 @cross_origin(supports_credentials=True)
