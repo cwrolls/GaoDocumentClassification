@@ -6,9 +6,9 @@ from azure.ai.documentintelligence.models import ClassifyDocumentRequest
 
 load_dotenv()
 
-KEY = os.environ["AZURE_DOCUMENT_INTELLIGENCE_KEY"]
-ENDPOINT = os.environ["AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"]
-CLASSIFIER_ID = os.environ["CLASSIFIER_ID"]
+KEY = os.getenv("AZURE_DOCUMENT_INTELLIGENCE_KEY")
+ENDPOINT = os.getenv("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT")
+CLASSIFIER_ID = os.getenv("CLASSIFIER_ID")
 API_TYPE = "documentClassifiers"
 API_VERSION = "2024-02-29-preview"
 
