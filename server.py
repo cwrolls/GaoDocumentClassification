@@ -39,7 +39,7 @@ def download_file_from_google_drive(service, file_id, destination):
         return None
     return destination
 
-@app.route('/')
+@app.route('/api')
 def home():
     return send_from_directory(app.static_folder, 'index.html')
 
