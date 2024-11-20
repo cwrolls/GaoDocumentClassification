@@ -43,6 +43,10 @@ def download_file_from_google_drive(service, file_id, destination):
 def home():
     return send_from_directory(app.static_folder, 'index.html')
 
+@app.errorhandler(404)
+def not_found(e):
+    return send_from_directory(app.static_folder, 'index.html')
+
 @app.route('/static/<path:path>')
 def static_files(path):
     return send_from_directory(app.static_folder, path)
@@ -151,3 +155,4 @@ if __name__ == '__main__':
     # app.run(port=8000, debug=True)
     port = int(os.environ.get("PORT", 8000))
     app.run(host="0.0.0.0", port=port)
+    print(f"Our app is running on port {port}")
