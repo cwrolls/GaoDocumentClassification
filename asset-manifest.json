@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/GaoDocumentClassification/static/css/main.65a6e158.css",
-    "main.js": "/GaoDocumentClassification/static/js/main.bcb5e5e0.js",
+    "main.js": "/GaoDocumentClassification/static/js/main.91925863.js",
     "static/js/453.96c21f8b.chunk.js": "/GaoDocumentClassification/static/js/453.96c21f8b.chunk.js",
     "static/media/Inter-SemiBold.woff": "/GaoDocumentClassification/static/media/Inter-SemiBold.ff53c7406a23717b16a8.woff",
     "static/media/Inter-Regular.woff": "/GaoDocumentClassification/static/media/Inter-Regular.bafbd62f86d686bb65d0.woff",
@@ -20,11 +20,11 @@
     "static/media/cohere.jpg": "/GaoDocumentClassification/static/media/cohere.8d1e6b762a9115c0e107.jpg",
     "index.html": "/GaoDocumentClassification/index.html",
     "main.65a6e158.css.map": "/GaoDocumentClassification/static/css/main.65a6e158.css.map",
-    "main.bcb5e5e0.js.map": "/GaoDocumentClassification/static/js/main.bcb5e5e0.js.map",
+    "main.91925863.js.map": "/GaoDocumentClassification/static/js/main.91925863.js.map",
     "453.96c21f8b.chunk.js.map": "/GaoDocumentClassification/static/js/453.96c21f8b.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.65a6e158.css",
-    "static/js/main.bcb5e5e0.js"
+    "static/js/main.91925863.js"
   ]
 }
