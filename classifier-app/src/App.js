@@ -555,7 +555,7 @@ function App() {
           <h1 className="text-3xl">Document Classifier</h1>
         </div>
         <div>
-          <p className="flex justify-center dm-sans-heading mt-3">built by Claire Wu</p>
+          <p className="flex justify-center dm-sans-heading mt-3">built by Claire Wu.</p>
           <p className="flex justify-center dm-sans-body mt-3">Powered by Azure Document Intelligence, LangChain, and Cohere.</p>
         </div>
         <div>
