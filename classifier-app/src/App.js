@@ -66,7 +66,7 @@ function App() {
   }, []);
 
   const CLIENT_ID = `651980250715-rljbofutivj2erurrledrt88hafe643f.apps.googleusercontent.com`;
-  const REDIRECT_URI = "https://dry-cove-25181-323453527e12.herokuapp.com"
+  const REDIRECT_URI = "https://cwrolls.github.io/GaoDocumentClassification"
 
   // Parse query string to see if page request is coming from OAuth 2.0 server.
   const parseOAuthParams = () => {
