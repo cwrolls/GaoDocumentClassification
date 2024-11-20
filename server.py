@@ -148,4 +148,6 @@ def get_refresh_token(user_id):
         return jsonify({"error": "Refresh token not found"}), 404
 
 if __name__ == '__main__':
-    app.run(port=8000, debug=True)
+    # app.run(port=8000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
