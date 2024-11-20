@@ -8,7 +8,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.credentials import Credentials
 
-app = Flask(__name__, static_folder='build', static_url_path='/')
+app = Flask(__name__, static_folder='build/')
 CORS(app, origins="*", supports_credentials=True)
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -39,9 +39,10 @@ def download_file_from_google_drive(service, file_id, destination):
         return None
     return destination
 
-@app.route('/api')
+@app.route('/')
 def home():
-    return send_from_directory(app.static_folder, 'index.html')
+    # return send_from_directory(app.static_folder, 'index.html')
+    return jsonify({"message": "Hello, World!"})
 
 @app.errorhandler(404)
 def not_found(e):
@@ -137,9 +138,7 @@ def store_refresh_token():
     if not refresh_token or not user_id:
         return jsonify({"error": "Missing refresh token or user id"}), 400
 
-    new_token = RefreshToken(user_id=user_id, token=refresh_token)
-    db.session.add(new_token)
-    db.session.commit()
+    new_token = refresh_token(user_id=user_id, token=refresh_token)
 
     return jsonify({"message": "Refresh token stored successfully"}), 200
 
