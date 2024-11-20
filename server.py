@@ -7,6 +7,7 @@ from drive import *
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.credentials import Credentials
+from pathlib import Path
 
 app = Flask(__name__, static_folder='build/')
 CORS(app, origins="*", supports_credentials=True)
@@ -68,7 +69,8 @@ def upload_file():
             # Set destination path
             filename = data['name']
             print("file name: " + data['name'])
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            downloads_path = str(Path.home() / "Downloads")
+            file_path = os.path.join(downloads_path, filename)
 
             # Download file from Google Drive
             download_file_from_google_drive(service, file_id, file_path)
