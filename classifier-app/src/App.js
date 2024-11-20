@@ -66,7 +66,9 @@ function App() {
   }, []);
 
   const CLIENT_ID = `651980250715-rljbofutivj2erurrledrt88hafe643f.apps.googleusercontent.com`;
-  const REDIRECT_URI = `http://127.0.0.1:3000`;
+  const REDIRECT_URI = process.env.NODE_ENV === 'production' 
+  ? 'https://dry-cove-25181-323453527e12.herokuapp.com/' 
+  : 'http://127.0.0.1:3000';
 
   // Parse query string to see if page request is coming from OAuth 2.0 server.
   const parseOAuthParams = () => {
