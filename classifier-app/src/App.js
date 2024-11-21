@@ -166,75 +166,10 @@ function App() {
       }),
     });
   
-    const data = await response.json();
-    if (data.access_token) {
-      await fetch('/store-refresh-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh_token: data.refresh_token }),
-      });
-
-      localStorage.setItem('oauth2-test-params', JSON.stringify(data));
-      setAccessToken(data.access_token);
-    } else {
-      console.error('Failed to exchange authorization code for tokens:', data);
-    }
+    localStorage.setItem('oauth2-test-params', JSON.stringify(data));
+    setAccessToken(data.access_token);
+    console.log("Exchanged code for tokens")
   }
-
-  async function refreshAccessToken(userId) {
-    const response = await fetch(`/get-refresh-token/${userId}`);
-    const data = await response.json();
-  
-    if (data.refresh_token) {
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          client_id: CLIENT_ID,
-          client_secret: process.env.REACT_APP_CLIENT_SECRET,
-          refresh_token: data.refresh_token,
-          grant_type: 'refresh_token',
-        }),
-      });
-  
-      const tokenData = await tokenResponse.json();
-      console.log("tokenData: ", tokenData)
-      if (tokenData.access_token) {
-        localStorage.setItem('oauth2-test-params', JSON.stringify({
-          ...JSON.parse(localStorage.getItem('oauth2-test-params')),
-          access_token: tokenData.access_token
-        }));
-        setAccessToken(tokenData.access_token);
-      } else {
-        console.error('Failed to refresh access token:', tokenData);
-      }
-    } else {
-      console.error('Failed to retrieve refresh token:', data);
-    }
-  }
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const authCode = urlParams.get('code');
-    if (authCode) {
-      exchangeCodeForTokens(authCode);
-    }
-  }, []);
-
-  // Refresh access token every 55 minutes
-  useEffect(() => {
-    if (accessToken) {
-      const interval = setInterval(() => {
-        refreshAccessToken(userId);
-      }, 55 * 60 * 1000); // 55 minutes
-      return () => clearInterval(interval);
-    }
-  }, [accessToken, userId]);
-
   
   // MARK: getOrCreateFolder
 

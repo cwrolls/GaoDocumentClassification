@@ -131,27 +131,6 @@ def extract_info():
         print(f"server Answer: {json.dumps(json_res)}")
         return json.dumps(json_res)
 
-@app.route('/store-refresh-token', methods=['POST'])
-def store_refresh_token():
-    data = request.get_json()
-    refresh_token = data.get('refresh_token')
-    user_id = data.get('user_id')
-
-    if not refresh_token or not user_id:
-        return jsonify({"error": "Missing refresh token or user id"}), 400
-
-    new_token = refresh_token(user_id=user_id, token=refresh_token)
-
-    return jsonify({"message": "Refresh token stored successfully"}), 200
-
-@app.route('/get-refresh-token/<user_id>', methods=['GET'])
-def get_refresh_token(user_id):
-    token_entry = RefreshToken.query.filter_by(user_id=user_id).first()
-    if token_entry:
-        return jsonify({"refresh_token": token_entry.token}), 200
-    else:
-        return jsonify({"error": "Refresh token not found"}), 404
-
 if __name__ == '__main__':
     # app.run(port=8000, debug=True)
     port = int(os.environ.get("PORT", 8000))
