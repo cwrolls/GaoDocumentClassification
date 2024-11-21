@@ -167,7 +167,7 @@ function App() {
     });
   
     const data = await response.json();
-    if (data.access_token && data.refresh_token) {
+    if (data.access_token) {
       await fetch('/store-refresh-token', {
         method: 'POST',
         headers: {
@@ -239,7 +239,7 @@ function App() {
   // MARK: getOrCreateFolder
 
   const getOrCreateFolder = async (accessToken) => {
-    const folderName = 'Gao Document Classification Files';
+    const folderName = 'DocumentClassificationFiles';
 
     try {
       const searchResponse = await fetch(
