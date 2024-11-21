@@ -9,6 +9,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.credentials import Credentials
 from pathlib import Path
+import tempfile
 import mimetypes
 
 app = Flask(__name__, static_folder='build/')
@@ -42,7 +43,14 @@ def download_file_from_drive(service, file_id):
             _, done = downloader.next_chunk()
 
         file_stream.seek(0)  # Reset the stream position for reading
-        return file_stream
+
+        file_bytes = file_stream.getvalue()
+
+        print(f"File size: {len(file_bytes)} bytes")
+        if len(file_stream.getvalue()) == 0:
+            raise ValueError("Downloaded file is empty or corrupt.")
+        
+        return file_bytes
     except Exception as e:
         print(f"Error downloading file from Google Drive: {e}")
         return None
@@ -83,7 +91,8 @@ def upload_file():
             # download_file_from_google_drive(service, file_id, file_path)
             # print("File downloaded from Google Drive to: " + file_path)
             # Download file from Google Drive
-            file_stream = download_file_from_drive(service, file_id)
+            file_bytes = download_file_from_drive(service, file_id)
+            file_stream = BytesIO(file_bytes)
 
             if not file_stream:
                 print("Failed to download file from Google Drive.")
@@ -91,11 +100,12 @@ def upload_file():
 
             # Determine the MIME type (e.g., 'application/pdf')
             mime_type, _ = mimetypes.guess_type(file_id)
+            print(f"MIME type: {mime_type}")
 
 
             class_result = classify_document("model6", file_stream, mime_type)
             my_json = json.loads(class_result)
-            file_map[file_id] = {"path": "TEMP PATH", "name": filename, "type": my_json['classification'], "class_res": class_result}
+            file_map[file_id] = {"path": "TEMP PATH", "name": filename, "type": my_json['classification'], "class_res": class_result, "file_bytes": file_bytes}
             print(f"Classification result: {class_result}")
             return jsonify({"status": "post_success", "file_id": file_id, "classification": my_json['classification'], "confidence": my_json['confidence']})
         
@@ -126,9 +136,18 @@ def extract_info():
             doc_type = file_data["type"]
             class_result = file_data["class_res"]
             file_name = file_data["name"]
+
+            # Create a temporary file path
+            temp_dir = tempfile.mkdtemp()
+            temp_path = os.path.join(temp_dir, file_name)
+            
+            # Write bytes to temporary file
+            file_bytes = file_data.get("file_bytes")
+            with open(temp_path, 'wb') as f:
+                f.write(file_bytes)
         
-            langchain_res = langchain(file_path)
-            print("Extracting info from " + file_path)
+            langchain_res = langchain(temp_path)
+            print("Extracting info from " + temp_path)
             print(langchain_res)
 
             json_res = llm(langchain_res, doc_type)
