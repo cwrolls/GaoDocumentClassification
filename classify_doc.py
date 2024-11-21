@@ -39,15 +39,19 @@ def classify_document(classifier_id, file_stream, mime_type):
 
     if mime_type == "image/jpeg":
         content_type = "image/jpeg"
+        print("found image/jpeg!")
     elif mime_type == "image/png":
         content_type = "image/png"
+        print("found image/png!")
     else:
         content_type = "application/pdf"
+        print("found application/pdf!")
 
     poller = document_intelligence_client.begin_classify_document(
         classifier_id, classify_request=file_stream, content_type=content_type
     )
 
+    print("got here")
     result: AnalyzeResult = poller.result()
 
     print("----Classified documents----")

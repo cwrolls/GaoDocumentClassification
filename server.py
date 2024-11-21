@@ -99,7 +99,9 @@ def upload_file():
                 return
 
             # Determine the MIME type (e.g., 'application/pdf')
-            mime_type, _ = mimetypes.guess_type(file_id)
+            mime = magic.Magic(mime=True)  # Create a Magic instance for MIME type detection
+            mime_type = mime.from_buffer(file_stream.read(2048))  # Read a portion of the stream for detection
+            file_stream.seek(0)  # Reset the stream position after reading
             print(f"MIME type: {mime_type}")
 
 

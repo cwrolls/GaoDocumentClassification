@@ -361,6 +361,7 @@ function App() {
               name: file.name,
             });
             if (response.status === 200) {
+              console.log('File type:', response.mimeType);
               console.log('Classification result:', response.data);
             } else {
               console.error('Error calling backend:', response.statusText);
