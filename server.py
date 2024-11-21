@@ -1,3 +1,4 @@
+from io import BytesIO
 from flask import Flask, request, jsonify, redirect, send_from_directory, session, url_for
 from flask_cors import CORS, cross_origin
 from werkzeug.utils import secure_filename
@@ -8,6 +9,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.credentials import Credentials
 from pathlib import Path
+import mimetypes
 
 app = Flask(__name__, static_folder='build/')
 CORS(app, origins="*", supports_credentials=True)
@@ -27,18 +29,23 @@ def get_drive_service(access_token):
     return build('drive', 'v3', credentials=credentials)
 
 def download_file_from_google_drive(service, file_id, destination):
+    """
+    Download a file from Google Drive as a byte stream.
+    """
     try:
         request = service.files().get_media(fileId=file_id)
-        with open(destination, 'wb') as f:
-            downloader = MediaIoBaseDownload(f, request)
-            done = False
-            while done is False:
-                status, done = downloader.next_chunk()
-                print("Download %d%%." % int(status.progress() * 100))
-    except HttpError as error:
-        print(f"An error occurred: {error}")
+        file_stream = BytesIO()
+        downloader = MediaIoBaseDownload(file_stream, request)
+
+        done = False
+        while not done:
+            _, done = downloader.next_chunk()
+
+        file_stream.seek(0)  # Reset the stream position for reading
+        return file_stream
+    except Exception as e:
+        print(f"Error downloading file from Google Drive: {e}")
         return None
-    return destination
 
 @app.route('/')
 def home():
@@ -69,16 +76,26 @@ def upload_file():
             # Set destination path
             filename = data['name']
             print("file name: " + data['name'])
-            downloads_path = str(Path.home() / "Downloads")
-            file_path = os.path.join(downloads_path, filename)
+            # downloads_path = str(Path.home() / "Downloads")
+            # file_path = os.path.join(downloads_path, filename)
 
             # Download file from Google Drive
-            download_file_from_google_drive(service, file_id, file_path)
-            print("File downloaded from Google Drive to: " + file_path)
+            # download_file_from_google_drive(service, file_id, file_path)
+            # print("File downloaded from Google Drive to: " + file_path)
+            # Download file from Google Drive
+            file_stream = download_file_from_drive(service, file_id)
 
-            class_result = classify_document("model6", file_path)
+            if not file_stream:
+                print("Failed to download file from Google Drive.")
+                return
+
+            # Determine the MIME type (e.g., 'application/pdf')
+            mime_type, _ = mimetypes.guess_type(file_id)
+
+
+            class_result = classify_document("model6", file_stream, mime_type)
             my_json = json.loads(class_result)
-            file_map[file_id] = {"path": file_path, "name": filename, "type": my_json['classification'], "class_res": class_result}
+            file_map[file_id] = {"path": "TEMP PATH", "name": filename, "type": my_json['classification'], "class_res": class_result}
             print(f"Classification result: {class_result}")
             return jsonify({"status": "post_success", "file_id": file_id, "classification": my_json['classification'], "confidence": my_json['confidence']})
         

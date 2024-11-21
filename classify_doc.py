@@ -22,7 +22,7 @@ file_type = ""
 doc_type_id = ""
 langchaindocs = []
 
-def classify_document(classifier_id, doc_path):
+def classify_document(classifier_id, file_stream, mime_type):
     global doc_type_id
     global file_type
     
@@ -36,26 +36,17 @@ def classify_document(classifier_id, doc_path):
     classifier_id = os.getenv("CLASSIFIER_ID", classifier_id)
 
     document_intelligence_client = DocumentIntelligenceClient(endpoint=endpoint, credential=AzureKeyCredential(key))
-    file_type = magic.from_file(doc_path, mime=True)
 
-    if file_type == "image/jpeg":
-      print("found jpeg")
-      with open(doc_path, "rb") as f:
-          poller = document_intelligence_client.begin_classify_document(
-              classifier_id, classify_request=f, content_type="image/jpeg"
-          )
-    elif file_type == "image/png":
-      print("found png")
-      with open(doc_path, "rb") as f:
-          poller = document_intelligence_client.begin_classify_document(
-              classifier_id, classify_request=f, content_type="image/png"
-          )
+    if mime_type == "image/jpeg":
+        content_type = "image/jpeg"
+    elif mime_type == "image/png":
+        content_type = "image/png"
     else:
-      print("found pdf")
-      with open(doc_path, "rb") as f:
-          poller = document_intelligence_client.begin_classify_document(
-              classifier_id, classify_request=f, content_type="application/pdf"
-          )
+        content_type = "application/pdf"
+
+    poller = document_intelligence_client.begin_classify_document(
+        classifier_id, classify_request=file_stream, content_type=content_type
+    )
 
     result: AnalyzeResult = poller.result()
 
