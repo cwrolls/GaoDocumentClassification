@@ -28,7 +28,7 @@ def get_drive_service(access_token):
     credentials = Credentials(token=access_token)
     return build('drive', 'v3', credentials=credentials)
 
-def download_file_from_drive(service, file_id, destination):
+def download_file_from_drive(service, file_id):
     """
     Download a file from Google Drive as a byte stream.
     """
