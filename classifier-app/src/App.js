@@ -376,7 +376,7 @@ function App() {
               infoLoading: true,
             };
             setFiles(prevFiles => prevFiles.map(file => file.id === id ? updatedFileData : file));
-            console.log("File array: " + files)
+            console.log("File IDs: " + files.map(file => file.id).join(", "));
             console.log("Doc type: " + response.data.classification + ", Confidence:" + response.data.confidence);
             console.log("File name: " + file.name);
 
