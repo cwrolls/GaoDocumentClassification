@@ -108,6 +108,7 @@ def upload_file():
             class_result = classify_document("model6", file_stream, mime_type)
             my_json = json.loads(class_result)
             file_map[file_id] = {"path": "TEMP PATH", "name": filename, "type": my_json['classification'], "class_res": class_result, "file_bytes": file_bytes}
+            print(file_map[file_id])
             print(f"Classification result: {class_result}")
             return jsonify({"status": "post_success", "file_id": file_id, "classification": my_json['classification'], "confidence": my_json['confidence']})
         
